@@ -89,13 +89,16 @@ show(gg.heatmap)
 ## and so forth
 coplot(MEDV ~ RM | LSTAT, data=housing.data)
 
-
 ## Conditioning on lower values of LSTAT seems to remove a lot of the
 ## correlation between MEDV and RM. However, a positive relationship
 ## seems to exist for higher values of observed LSTAT.
 
-## Let's turn things around and build our own coplot for MEDV ~ LSTAT | RM
+## Note that we can condition on 2 variables with coplot().
+## Check out AGE, LSTAT, and RM
+pairs(MEDV ~ AGE + LSTAT + RM, data=housing.data)
+coplot(MEDV ~ AGE | LSTAT * RM, housing.data, show.given=FALSE)
 
+## Let's turn things around and build our own coplot for MEDV ~ LSTAT | RM
 housing.data[,RM.breaks := cut(RM,breaks=c(3,4,5,6,7,8,9))]
 
 melted.data <- melt(data=housing.data[,list(MEDV,LSTAT,RM.breaks)],
@@ -113,9 +116,10 @@ gg.coplot <- gg.coplot + labs(x="LSTAT")
 ## we can add various types of regression lines to this plot
 show(gg.coplot + stat_smooth(method="lm", se=FALSE))
 
+## ?loess shows we are locally fitting quadratics.
 show(gg.coplot + stat_smooth(method="loess", se=FALSE, span=0.9))
 
-## To get a feel for the bias-variance trade-off of the span parameter
+## To get a feel for the bias-variance trade-off of the span= parameter
 ## let's look at MEDV ~ LSTAT
 gg.loess <- ggplot(data=housing.data, aes(x=LSTAT,y=MEDV)) + geom_point()
 
