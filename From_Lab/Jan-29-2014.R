@@ -47,3 +47,110 @@
 # Clearly you can spend forever on the linear algebra, so don't go overboard. It is suppose to be a review. Some things you'll review as they come up over the semester (e.g. eigenvalues are not critical until much later in the course). But familiarity with matrix inverse is critical right away.
 
 #####
+
+## load Boston Housing Data
+
+library(data.table)
+
+column.names <- c("CRIM","ZN","INDUS","CHAS","NOX",
+                  "RM","AGE","DIS","RAD","TAX","PTRATIO",
+                  "B","LSTAT","MEDV")
+
+housing.data <- data.table(read.table(file="Data/boston_housing_data.txt",
+                                      header=FALSE,
+                                      col.names=column.names))
+
+## Consider the relationship between Crime Rate, Number of Rooms,
+## % of Old Homes, a measure of diversity, % lower status, pupil:teacher and median value
+
+pairs(MEDV ~ CRIM + RM + AGE + B + LSTAT + PTRATIO,
+      data=housing.data,
+      lower.panel=NULL)
+
+library(ggplot2)
+library(reshape2)
+
+cor.dt <- melt(cor(housing.data[,list(MEDV,CRIM,RM,AGE,B,LSTAT,PTRATIO)]))
+
+gg.heatmap <- ggplot(data=cor.dt,aes(x=Var1,y=Var2,fill=value))
+gg.heatmap <- gg.heatmap + geom_tile() 
+gg.heatmap <- gg.heatmap + geom_text(aes(label=round(value,3)),color='red')
+gg.heatmap <- gg.heatmap + labs(x=NULL,y=NULL,title="Correlation Structure")
+
+show(gg.heatmap)
+
+## MEDV has strong correlation with LSTAT and RM...
+## LSTAT and RM have a strong correlation, as well, though!
+
+## Let's look at a coplot of MEDV, LSTAT, and RM:
+
+## facets wrap from top-left to top-right, then bottom-left to bottom-right
+## top-left corresponds to first "shingle", top-middle to second "shingle",
+## and so forth
+coplot(MEDV ~ RM | LSTAT, data=housing.data)
+
+
+## Conditioning on lower values of LSTAT seems to remove a lot of the
+## correlation between MEDV and RM. However, a positive relationship
+## seems to exist for higher values of observed LSTAT.
+
+## Let's turn things around and build our own coplot for MEDV ~ LSTAT | RM
+
+housing.data[,RM.breaks := cut(RM,breaks=c(3,4,5,6,7,8,9))]
+
+melted.data <- melt(data=housing.data[,list(MEDV,LSTAT,RM.breaks)],
+                    id.vars=c("MEDV","RM.breaks")) 
+
+gg.coplot <- ggplot(data=melted.data, aes(x=value,y=MEDV,group=RM.breaks)) 
+gg.coplot <- gg.coplot + geom_point() + facet_grid(RM.breaks~.,
+                                                   scales="free_y")
+gg.coplot <- gg.coplot + stat_smooth(formula=y~1,method="lm",
+                                     color='red',
+                                     lty=2,
+                                     se=FALSE)
+gg.coplot <- gg.coplot + labs(x="LSTAT")
+
+## we can add various types of regression lines to this plot
+show(gg.coplot + stat_smooth(method="lm", se=FALSE))
+
+show(gg.coplot + stat_smooth(method="loess", se=FALSE, span=0.9))
+
+## To get a feel for the bias-variance trade-off of the span parameter
+## let's look at MEDV ~ LSTAT
+gg.loess <- ggplot(data=housing.data, aes(x=LSTAT,y=MEDV)) + geom_point()
+
+lapply(X=c(0.1, 0.25,0.4,0.75),
+       FUN=function(span) {
+         tmp <- gg.loess + stat_smooth(method="loess",
+                                       se=FALSE,
+                                       span=span,
+                                       size=1)
+         show(tmp + labs(title=paste("Span = ", span)))
+})
+
+
+## Not a lot of data for RM in  (3,4], or (4,5], but RM in (5,8] shows a
+## considerable link between MEDV and LSTAT. 
+
+## Let's investigate.
+## feel free to fiddle with span= to get an idea of Bias-Variance trade-off.
+library(ggplot2)
+ggplot(data=housing.data, aes(x=RM, y=LSTAT)) + geom_point() + stat_smooth(method="lm", color='red', se=FALSE) + stat_smooth(method="loess", color='blue', se=FALSE, span=0.85)
+
+## These variables seem to have a strong (negative) correlation:
+with(data=housing.data,cor(RM, LSTAT)) # -0.618
+
+ggplot(data=housing.data, aes(x=RM, y=CRIM)) + geom_point() + stat_smooth(method="lm", color='red', se=FALSE) + stat_smooth(method="loess", color='blue', se=FALSE, span=0.85)
+
+## These variables have a weak (negative) correlation:
+with(data=housing.data,cor(RM, CRIM)) # -0.219
+
+## Let's zoom in on MEDV ~ CRIM + RM + AGE + B + LSTAT
+library(reshape2)
+ggplot(data=melt(data=housing.data[,list(MEDV,CRIM,RM,AGE,B,LSTAT)],id.vars="MEDV"), aes(x=value,y=MEDV)) + geom_point() + stat_smooth(method="lm",span=0.9,se=FALSE,color='red') +  facet_grid(~variable,scales="free_x")
+with(data=housing.data, plot(LSTAT, RM))
+
+# library(GGally)
+# pairs.plot <- ggpairs(data=housing.data,columns=c("CRIM", "RM", "AGE", "B", "LSTAT", "MEDV"))
+
+
