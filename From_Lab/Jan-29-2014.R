@@ -101,26 +101,35 @@ coplot(MEDV ~ AGE | LSTAT * RM, housing.data, show.given=FALSE)
 ## Let's turn things around and build our own coplot(s)
 ## Ignore the guidance that intervals should overlap...
 housing.data[,RM.breaks := cut(RM,breaks=c(3,4,5,6,7,8,9))]
-housing.data[,LSTAT.breaks:=cut_interval(LSTAT,n=6)]
+housing.data[,LSTAT.breaks:=cut_interval(LSTAT,n=3)]
 housing.data[,AGE.breaks:=cut_interval(AGE,n=6)]
 
-melted.data <- melt(data=housing.data[,list(MEDV,LSTAT,RM.breaks)],
-                    id.vars=c("MEDV","RM.breaks")) 
+## Focus on MEDV ~ AGE | LSTAT * RM
+melted.data <- melt(data=housing.data[,list(MEDV,AGE,
+                                            RM.breaks,
+                                            LSTAT.breaks,
+                                            AGE.breaks)
+                                      ],
+                    id.vars=c("MEDV","RM.breaks",
+                              "LSTAT.breaks", "AGE.breaks")) 
 
 gg.coplot <- ggplot(data=melted.data, aes(x=value,y=MEDV,group=RM.breaks)) 
-gg.coplot <- gg.coplot + geom_point() + facet_grid(RM.breaks~.,
-                                                   scales="free_y")
+gg.coplot <- gg.coplot + geom_point() + facet_grid(RM.breaks~LSTAT.breaks,
+                                                   scales="free")
 gg.coplot <- gg.coplot + stat_smooth(formula=y~1,method="lm",
                                      color='red',
                                      lty=2,
                                      se=FALSE)
-gg.coplot <- gg.coplot + labs(x="LSTAT")
+gg.coplot <- gg.coplot + labs(x="AGE",title="MEDV ~ AGE | LSTAT * RM")
 
 ## we can add various types of regression lines to this plot
 show(gg.coplot + stat_smooth(method="lm", se=FALSE))
 
 ## ?loess shows we are locally fitting quadratics.
 show(gg.coplot + stat_smooth(method="loess", se=FALSE, span=0.9))
+
+## Note how some plots have few, or no, points?
+## Welcome to the "curse of dimensionality".
 
 ## To get a feel for the bias-variance trade-off of the span= parameter
 ## let's look at MEDV ~ LSTAT
