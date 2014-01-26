@@ -84,22 +84,25 @@ show(gg.heatmap)
 
 ## Let's look at a coplot of MEDV, LSTAT, and RM:
 
-## facets wrap from top-left to top-right, then bottom-left to bottom-right
-## top-left corresponds to first "shingle", top-middle to second "shingle",
-## and so forth
+## facets wrap from bottom to top, starting at the left...
+## bottom-left corresponds to first "shingle", bottom-middle
+## to second "shingle", and so forth...
 coplot(MEDV ~ RM | LSTAT, data=housing.data)
 
-## Conditioning on lower values of LSTAT seems to remove a lot of the
+## Conditioning on higher values of LSTAT seems to remove a lot of the
 ## correlation between MEDV and RM. However, a positive relationship
-## seems to exist for higher values of observed LSTAT.
+## seems to exist for lower values of observed LSTAT.
 
 ## Note that we can condition on 2 variables with coplot().
 ## Check out AGE, LSTAT, and RM
 pairs(MEDV ~ AGE + LSTAT + RM, data=housing.data)
 coplot(MEDV ~ AGE | LSTAT * RM, housing.data, show.given=FALSE)
 
-## Let's turn things around and build our own coplot for MEDV ~ LSTAT | RM
+## Let's turn things around and build our own coplot(s)
+## Ignore the guidance that intervals should overlap...
 housing.data[,RM.breaks := cut(RM,breaks=c(3,4,5,6,7,8,9))]
+housing.data[,LSTAT.breaks:=cut_interval(LSTAT,n=6)]
+housing.data[,AGE.breaks:=cut_interval(AGE,n=6)]
 
 melted.data <- melt(data=housing.data[,list(MEDV,LSTAT,RM.breaks)],
                     id.vars=c("MEDV","RM.breaks")) 
@@ -132,29 +135,4 @@ lapply(X=c(0.1, 0.25,0.4,0.75),
          show(tmp + labs(title=paste("Span = ", span)))
 })
 
-
-## Not a lot of data for RM in  (3,4], or (4,5], but RM in (5,8] shows a
-## considerable link between MEDV and LSTAT. 
-
-## Let's investigate.
-## feel free to fiddle with span= to get an idea of Bias-Variance trade-off.
-library(ggplot2)
-ggplot(data=housing.data, aes(x=RM, y=LSTAT)) + geom_point() + stat_smooth(method="lm", color='red', se=FALSE) + stat_smooth(method="loess", color='blue', se=FALSE, span=0.85)
-
-## These variables seem to have a strong (negative) correlation:
-with(data=housing.data,cor(RM, LSTAT)) # -0.618
-
-ggplot(data=housing.data, aes(x=RM, y=CRIM)) + geom_point() + stat_smooth(method="lm", color='red', se=FALSE) + stat_smooth(method="loess", color='blue', se=FALSE, span=0.85)
-
-## These variables have a weak (negative) correlation:
-with(data=housing.data,cor(RM, CRIM)) # -0.219
-
-## Let's zoom in on MEDV ~ CRIM + RM + AGE + B + LSTAT
-library(reshape2)
-ggplot(data=melt(data=housing.data[,list(MEDV,CRIM,RM,AGE,B,LSTAT)],id.vars="MEDV"), aes(x=value,y=MEDV)) + geom_point() + stat_smooth(method="lm",span=0.9,se=FALSE,color='red') +  facet_grid(~variable,scales="free_x")
-with(data=housing.data, plot(LSTAT, RM))
-
-# library(GGally)
-# pairs.plot <- ggpairs(data=housing.data,columns=c("CRIM", "RM", "AGE", "B", "LSTAT", "MEDV"))
-
-
+## Simulation: demonstrating Y ~ X | Z, when X and Z are (in)dependent.
