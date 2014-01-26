@@ -145,3 +145,29 @@ lapply(X=c(0.1, 0.25,0.4,0.75),
 })
 
 ## Simulation: demonstrating Y ~ X | Z, when X and Z are (in)dependent.
+
+## First case: X and Z are independent.
+set.seed(1234)
+simulation1.dt <- data.table(X=rnorm(n=100,mean=2),
+                             Z=rnorm(n=100,mean=-1,sd=sqrt(2)),
+                             noise=rnorm(100))
+simulation1.dt[, Y1 := X + Z + noise ]
+
+pairs(simulation1.dt)
+
+coplot(Y1 ~ X | Z, data=simulation1.dt)
+coplot(Y1 ~ Z | X, data=simulation1.dt)
+
+## Second case: X and Z are dependent.
+set.seed(1234)
+simulation2.dt <- data.table(X=rnorm(n=100,mean=2),
+                             noise=rnorm(100))
+simulation2.dt[, Z := X + atan(X) ]
+simulation2.dt[, Y2 := X + Z + noise ]
+
+pairs(simulation2.dt)
+
+## Conditioning on X removes most of Z's predictive power
+coplot(Y2 ~ Z | X, data=simulation2.dt)
+coplot(Y2 ~ X | Z, data=simulation2.dt)
+
