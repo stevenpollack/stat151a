@@ -31,7 +31,8 @@ housing.data <- data.table(read.table(file="Data/boston_housing_data.txt",
                                       col.names=column.names))
 
 ## Consider the relationship between Crime Rate, Number of Rooms,
-## % of Old Homes, a measure of diversity, % lower status, pupil:teacher and median value
+## % of Old Homes, a measure of diversity, % lower status, pupil:teacher
+## and median value
 
 pairs(MEDV ~ CRIM + RM + AGE + B + LSTAT + PTRATIO,
       data=housing.data,
@@ -140,4 +141,3 @@ pairs(simulation2.dt)
 ## Conditioning on X removes most of Z's predictive power
 coplot(Y2 ~ Z | X, data=simulation2.dt)
 coplot(Y2 ~ X | Z, data=simulation2.dt)
-
