@@ -3,3 +3,8 @@
 .RData
 For_Instructors/*
 *.Rproj
+*_solutions.pdf
+*.tex
+*.log
+*.synctex.gz
+*cache*
