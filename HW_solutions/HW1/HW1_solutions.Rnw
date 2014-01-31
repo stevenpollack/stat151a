@@ -86,4 +86,31 @@ opts_chunk$set(comment="#",tidy=F,warning=FALSE,message=FALSE,highlight=T,echo=T
   S(A') = \sum_{i=1}^{n} (Y_i - A')^2
 \]
 
+\paragraph{\#6.}
+\begin{enumerate}
+  \item[(a)] Exploratory Data Analysis (EDA): Create each of the following
+  plots using appropriate variables in the data. Do not include variables for 
+  which the plot is not meaningful or descriptive of the data.
+  
+  Comment on each of the plots: Does anything catch your attention? Are there 
+  any outliers or surprises? Give a reason for your answers.
+  \begin{itemize}
+    \item Histogram / Density Plot
+    \item Boxplot
+    \item Pairs plot with smoothing lines
+    \item Co-plot
+    \item Scatterplot with a smoothing line (lowess) (choose the pair of 
+    variables that you find most interesting or most want to look at more 
+    closely based on the pairs plot, and explain why you chose them in your 
+    comment).
+  \end{itemize}
+  
+  \item[(b)] Carry out an Ordinary Least Squares analysis relating the gas 
+  mileage to the other features. You may use R to do the analysis.
+  
+  \item[(c)] Create residual plots. Does anything catch your attention? Are 
+  there any outliers? Give a reason for your answers.
+
+\end{enumerate}
+
 \end{document}
