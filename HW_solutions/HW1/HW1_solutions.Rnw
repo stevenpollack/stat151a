@@ -1,6 +1,44 @@
-\documentclass{article}
+\documentclass[10pt,titlepage]{article}
+
+\usepackage{../mcgill}
+
+% \renewcommand{\O}{\mathcal{O}}
+% \renewcommand{\Q}{\mathcal{Q}}
+% \renewcommand{\H}{\mathcal{H}}
+% \renewcommand{\N}{\mathcal{N}}
+% 
+% \usepackage{fancyhdr}
+% 
+% \lhead{CS281A}
+% \chead{Problem Set \#1}
+% \rhead{Steven Pollack -- 24112977}
+% \cfoot{\thepage}
+% 
+% \title{CS281A \\ Problem Set \#1}
+% \author{Steven Pollack \\ 24112977}
+% \date{}
 
 \begin{document}
+% 
+% \maketitle
+% \pagestyle{empty}
+% \newpage
+% \pagestyle{fancy}
+
+<<globalParameters,echo=FALSE,cache=FALSE>>=
+set.seed(1234)
+opts_chunk$set(comment="#",tidy=F,warning=FALSE,message=FALSE,highlight=T,echo=T,cache=T)
+@
+
+%%%%% knitr code to make sure things stay inside listings box:
+<<stayInside,echo=FALSE>>=
+  options(width=60)
+  listing <- function(x, options) {
+     paste("\\begin{lstlisting}[basicstyle=\\ttfamily,breaklines=true]\n", x,"\\end{lstlisting}\n", sep = "")
+  }
+  
+  knit_hooks$set(source=listing, output=listing)
+@
 
 \paragraph{Exercise 5.2} *Suppose that the means and standard deviations of $Y$ and $X$ are the same: $\bar{Y} = \bar{X}$ and $S_{Y} = S_{X}$. 
 
