@@ -47,15 +47,38 @@ opts_chunk$set(comment="#",tidy=F,warning=FALSE,message=FALSE,highlight=T,echo=T
   \[
     B_{Y|X} = B_{X|Y} = r_{XY}
   \]
-  where $B_{Y|X}$ is the least-squares slope for the simple regression of $Y$ on $X$; $B_{X|Y}$ is the least-squares slope for the simple regression of $X$ on $Y$; and $r_{XY}$ is the correlation between the two variables. Show that the intercepts are also the same, $A_{Y|X} = A_{X|Y}$. 
+  where $B_{Y|X}$ is the least-squares slope for the simple regression of $Y$
+  on $X$; $B_{X|Y}$ is the least-squares slope for the simple regression of
+  $X$ on $Y$; and $r_{XY}$ is the correlation between the two variables. Show
+  that the intercepts are also the same, $A_{Y|X} = A_{X|Y}$. 
   
-  \item[(b)] Why, if $A_{Y|X} = A_{X|Y}$ and $B_{Y|X} = B_{X|Y}$, is the least-squares line for the regression of $Y$ on $X$ different from the line frothe regression of $X$ on $Y$ (as long as $r^2 < 1$)?
+  \item[(b)] Why, if $A_{Y|X} = A_{X|Y}$ and $B_{Y|X} = B_{X|Y}$, is the
+  least-squares line for the regression of $Y$ on $X$ different from the line
+  from the regression of $X$ on $Y$ (as long as $r^2 < 1$)?
   
-  \item[(c)] "Regression toward the mean" (the original sense of the term "regression"): Imagine that $X$ is father's height and $Y$ is son's height for a sample of father-son pairs. Suppose that $S_{Y} = S_{X}$, that $\bar{Y} = \bar{X}$, and that the regression of sons' heights on fathers'heights is linear. Finally, suppose that $0 < r_{XY} < 1$ (i.e., fathers' and sons' heights are positively correlated, but not perfectly so). Show that the expected height of a son whose father is shorter than average is also less than average, but to a smaller extent; likewise, the expected height of a son whose father is taller than average is also greater than average, but to a smaller extent. Does this result imply a contradiction -- that the standard deviation of a son's height is infact less that that of father's height?
+  \item[(c)] "Regression toward the mean" (the original sense of the term
+  "regression"): Imagine that $X$ is father's height and $Y$ is son's height
+  for a sample of father-son pairs. Suppose that $S_{Y} = S_{X}$, that
+  $\bar{Y} = \bar{X}$, and that the regression of sons' heights on fathers' 
+  heights is linear. Finally, suppose that $0 < r_{XY} < 1$ (i.e., fathers'
+  and sons' heights are positively correlated, but not perfectly so).
+  Show that the expected height of a son whose father is shorter than average
+  is also less than average, but to a smaller extent; likewise, the expected
+  height of a son whose father is taller than average is also greater than
+  average, but to a smaller extent. Does this result imply a contradiction
+  -- that the standard deviation of a son's height is infact less that that
+  of father's height?
   
-  \item[(d)] What is th eexpected height for a father whose son is shorter than average? Of a father whose son is taller than average?
+  \item[(d)] What is the expected height for a father whose son is shorter
+  than average? Of a father whose son is taller than average?
   
-  \item[(e)] Regression effects in research design: Imagein that educational researchers wish to assess the efficacy of a new program to improve the reading perforamnce of children. To test the program, they recruit a group of children who are reading substatntially below grade level; after a year in the program, the researchers observe that the children, on average, have improved their reading performance. Why is this a weak research design? How could it be improved?
+  \item[(e)] Regression effects in research design: Imagine that educational
+  researchers wish to assess the efficacy of a new program to improve the
+  reading performance of children. To test the program, they recruit a group
+  of children who are reading substantially below grade level; after a year
+  in the program, the researchers observe that the children, on average, have
+  improved their reading performance. Why is this a weak research design?
+  How could it be improved?
 \end{enumerate}
 
 \paragraph{Exercise 5.3.} *Show that $A' = \bar{Y}$ minimizes the sum of squares
