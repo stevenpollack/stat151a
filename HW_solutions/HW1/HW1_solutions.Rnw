@@ -139,18 +139,144 @@ opts_chunk$set(comment="#",
     cars_dt[, origin := as.factor(origin)]
   @
   
-  <<>>=
-    cars_dt[, !"car_name", with=FALSE][,
-                                       lapply(.SD,FUN=function(col){
-                                         print(names(col))
-    gg_plot <- ggplot(data=data.frame(X=col), aes(x=X)) + geom_histogram(aes(y=..density..))
-    if (!is.factor(col)) {
-      gg_plot <- gg_plot + stat_density(fill=NA,color='red')
-    }
-    show(gg_plot)
-  })]
+  <<prob6aHistograms, echo=FALSE, results='hide'>>=
+    base_layer <- ggplot(data=cars_dt)
+    
+    mpg_density_plot <- base_layer + geom_histogram(aes(x=mpg,
+                                                        y=..density..),
+                                                    binwidth=1)
+    mpg_density_plot <- mpg_density_plot + stat_density(aes(x=mpg),
+                                                        fill=NA,
+                                                        color='red')
+    mpg_density_plot <- mpg_density_plot + labs(x="MPG",
+                                                y=NULL,
+                                                title="Histogram of mpg")
+
+    displacement_density_plot <- base_layer + 
+                                  geom_histogram(aes(x=displacement,
+                                                     y=..density..),
+                                                 binwidth=60)
+    displacement_density_plot <- displacement_density_plot + 
+                                  stat_density(aes(x=displacement),
+                                              fill=NA,
+                                              color='red')
+    displacement_density_plot <- displacement_density_plot + 
+                                  labs(y=NULL,
+                                       x="displacement",
+                                       title="Histogram of displacement")
+
+    horsepower_density_plot <- base_layer + 
+                                  geom_histogram(aes(x=horsepower,
+                                                     y=..density..),
+                                                 binwidth=15)
+    horsepower_density_plot <- horsepower_density_plot + 
+                                  stat_density(aes(x=horsepower),
+                                              fill=NA,
+                                              color='red')
+    horsepower_density_plot <- horsepower_density_plot + 
+                                  labs(y=NULL,
+                                       x="horsepower",
+                                       title="Histogram of horsepower")
+
+    acceleration_density_plot <- base_layer + 
+                                  geom_histogram(aes(x=acceleration,
+                                                     y=..density..),
+                                                 binwidth=0.75)
+    acceleration_density_plot <- acceleration_density_plot + 
+                                  stat_density(aes(x=acceleration),
+                                              fill=NA,
+                                              color='red')
+    acceleration_density_plot <- acceleration_density_plot + 
+                                  labs(y=NULL,
+                                       x="acceleration",
+                                       title="Histogram of acceleration")
+    
+    weight_density_plot <- base_layer + 
+                                  geom_histogram(aes(x=weight,
+                                                     y=..density..),
+                                                 binwidth=250)
+    weight_density_plot <- weight_density_plot + 
+                                  stat_density(aes(x=weight),
+                                              fill=NA,
+                                              color='red')
+    weight_density_plot <- weight_density_plot + 
+                                  labs(y=NULL,
+                                       x="weight",
+                                       title="Histogram of weight")
+
+    model_year_histogram <- base_layer + 
+                                  geom_histogram(aes(x=model_year))
+
+    model_year_histogram <- model_year_histogram + 
+                                  labs(y=NULL,
+                                       x="model_year",
+                                       title="Histogram of model_year")
+    
+    cylinders_histogram <- base_layer + 
+                                  geom_histogram(aes(x=cylinders))
+
+    cylinders_histogram <- cylinders_histogram + 
+                                  labs(y=NULL,
+                                       x="cylinders",
+                                       title="Histogram of cylinders")
+    
+    origin_histogram <- base_layer + 
+                                  geom_histogram(aes(x=origin))
+
+    origin_histogram <- origin_histogram + 
+                                  labs(y=NULL,
+                                       x="origin",
+                                       title="Histogram of origin")
+  @ 
+  
+  <<prob6aHistOutput, dev='pdf', out.width='0.35\\textwidth', fig.align='center', fig.show='hold', fig.cap='Histograms for all variables except \\texttt{cars\\_name}', echo=FALSE, dependson="prob6aHistograms">>=
+    mpg_density_plot
+    cylinders_histogram
+    displacement_density_plot
+    horsepower_density_plot
+    weight_density_plot    
+    acceleration_density_plot
+    model_year_histogram
+    origin_histogram
   @
   
+  <<prob6aBoxplots,echo=FALSE,results='hide'>>=
+    mpg_boxplot <- ggplot(data=cars_dt, aes(x="mpg", y=mpg)) +
+                    geom_boxplot() +
+                    geom_point(alpha=0.5, shape=1) +
+                    labs(x=NULL,y="mpg",title=NULL)
+
+    displacement_boxplot <- ggplot(data=cars_dt, aes(x="displacement",
+                                                     y=displacement)) +
+                              geom_boxplot() +
+                              geom_point(alpha=0.5, shape=1) +
+                              labs(x=NULL,y="displacement",title=NULL)
+
+    horsepower_boxplot <- ggplot(data=cars_dt, aes(x="horsepower",
+                                                   y=horsepower)) +
+                            geom_boxplot() +
+                            geom_point(alpha=0.5, shape=1) +
+                            labs(x=NULL,y="horsepower",title=NULL)
+
+    weight_boxplot <- ggplot(data=cars_dt, aes(x="weight", y=weight)) +
+                        geom_boxplot() +
+                        geom_point(alpha=0.5, shape=1) +
+                        labs(x=NULL,y="weight",title=NULL)
+
+    acceleration_boxplot <- ggplot(data=cars_dt, aes(x="acceleration",
+                                                     y=acceleration)) +
+                              geom_boxplot() +
+                              geom_point(alpha=0.5, shape=1) +
+                              labs(x=NULL,y="acceleration",title=NULL)
+  @
+  
+  <<prob6aBoxplotOutput, dev='pdf', out.width='0.35\\textwidth', fig.align='center', fig.show='hold', fig.cap='Boxplots for all continuous variables in dataset.', echo=FALSE, dependson="prob6aBoxplots">>=
+    mpg_boxplot
+    displacement_boxplot
+    horsepower_boxplot
+    weight_boxplot
+    acceleration_boxplot
+  @
   
   <<prob6aPairsPlot, echo=FALSE, dev='pdf', out.width="0.95\\textwidth", fig.cap="Pairs plot with smoothing.">>=
     pairs(cars_dt[,  !"car_name", with=FALSE], panel = panel.smooth)
