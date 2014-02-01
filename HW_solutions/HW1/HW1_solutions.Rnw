@@ -139,21 +139,24 @@ opts_chunk$set(comment="#",
     cars_dt[, origin := as.factor(origin)]
   @
   
-  <<prob6aPairsPlot, echo=FALSE, dev='pdf', out.width="0.95\\textwidth">>=
-#     gpairs_plot <- ggpairs(cars_dt[,  !"car_name", with=FALSE],
-#             upper=list(continuous='smooth',combo='box',discrete='facetbar'),
-#             lower=list(continuous='cor', combo='facetdensity', discrete='facetbar'),
-#             diag=list(continuous="density", discrete="bar"),
-#             axisLabels="show",
-#             params=c(alpha=0.25),
-#             color="model_year",
-#             verbose=FALSE
-#     )
-#     gpairs_plot
+  <<>>=
+    cars_dt[, !"car_name", with=FALSE][,
+                                       lapply(.SD,FUN=function(col){
+                                         print(names(col))
+    gg_plot <- ggplot(data=data.frame(X=col), aes(x=X)) + geom_histogram(aes(y=..density..))
+    if (!is.factor(col)) {
+      gg_plot <- gg_plot + stat_density(fill=NA,color='red')
+    }
+    show(gg_plot)
+  })]
+  @
+  
+  
+  <<prob6aPairsPlot, echo=FALSE, dev='pdf', out.width="0.95\\textwidth", fig.cap="Pairs plot with smoothing.">>=
     pairs(cars_dt[,  !"car_name", with=FALSE], panel = panel.smooth)
   @
   
-  <<prob6aCoplot, dev='pdf', out.width="0.49\\textwidth", fig.align='center', fig.cap="coplots for Problem 6.a.", fig.show='hold', echo=FALSE>>=
+  <<prob6aCoplot, dev='pdf', out.width="0.49\\textwidth", fig.align='center', fig.cap="Coplots examining various conditional dependences between \texttt{mpg} and other features.", fig.show='hold', echo=FALSE>>=
     coplot1 <- cars_dt[, coplot(mpg ~ displacement | horsepower,
                    panel=function(x,y,...) panel.smooth(x,y,span=0.8,...)
                    )]
