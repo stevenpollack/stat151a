@@ -27,7 +27,13 @@
 
 <<globalParameters,echo=FALSE,cache=FALSE>>=
 set.seed(1234)
-opts_chunk$set(comment="#",tidy=F,warning=FALSE,message=FALSE,highlight=T,echo=T,cache=T)
+opts_chunk$set(comment="#",
+               tidy=FALSE,
+               warning=FALSE,
+               message=FALSE,
+               highlight=TRUE,
+               echo=TRUE,
+               cache=TRUE)
 @
 
 %%%%% knitr code to make sure things stay inside listings box:
@@ -112,5 +118,50 @@ opts_chunk$set(comment="#",tidy=F,warning=FALSE,message=FALSE,highlight=T,echo=T
   there any outliers? Give a reason for your answers.
 
 \end{enumerate}
+
+\begin{proof}[Solution]
+\begin{enumerate}
+  \item[(a)] See figures...
+  <<prob6a, results='hide', echo=FALSE>>=
+    setwd(dir="~/Dropbox/Berkeley/STAT151A/")
+    library(GGally)
+    library(data.table)
+
+    col_names <- c("mpg", "cylinders", "displacement", "horsepower", "weight",
+                   "acceleration", "model_year", "origin", "car_name")
+
+    cars_dt <- data.table(read.table(file="Data/auto-mpg.data.txt",
+                                     header=FALSE,
+                                     col.names=col_names))
+
+    cars_dt[, cylinders := as.factor(cylinders)]
+    cars_dt[, model_year := as.factor(model_year)]
+    cars_dt[, origin := as.factor(origin)]
+  @
+  <<prob6aPairsPlot, results='hide', dev='pdf', fig.show='hide'>>=
+    gpairs_plot <- ggpairs(cars_dt[, !"car_name", with=FALSE],
+            upper=list(continuous='smooth',combo='box',discrete='facetbar'),
+            lower=list(continuous='cor', combo='facethist', discrete='facetbar'),
+            diag=list(continuous="density", discrete="bar"),
+            axisLabels="show")
+    gpairs_plot
+  @
+  <<prob6aCoplot, dev='pdf', out.width="0.49\\textwidth", fig.align='center', fig.cap="coplots for Problem 6.a.", fig.show='hold', echo=FALSE>>=
+    coplot1 <- cars_dt[, coplot(mpg ~ displacement | horsepower,
+                   panel=function(x,y,...) panel.smooth(x,y,span=0.8,...)
+                   )]
+    coplot2 <- cars_dt[, coplot(mpg ~ horsepower | displacement,
+                   panel=function(x,y,...) panel.smooth(x,y,span=0.8,...)
+                   )] # comment on this
+    coplot3 <- cars_dt[, coplot(mpg ~ acceleration | horsepower,
+                   panel=function(x,y,...) panel.smooth(x,y,span=0.9,...)
+                   )]
+    coplot4 <- cars_dt[, coplot(mpg ~ origin | weight,
+                   panel= panel.smooth
+                   )]
+  @
+  
+\end{enumerate}
+\end{proof}
 
 \end{document}
