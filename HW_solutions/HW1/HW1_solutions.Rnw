@@ -119,9 +119,8 @@ opts_chunk$set(comment="#",
 
 \end{enumerate}
 
-\begin{proof}[Solution]
+\paragraph{\textit{Solution.}}
 \begin{enumerate}
-  \item[(a)] See figures...
   <<prob6a, results='hide', echo=FALSE>>=
     setwd(dir="~/Dropbox/Berkeley/STAT151A/")
     library(GGally)
@@ -138,7 +137,24 @@ opts_chunk$set(comment="#",
     cars_dt[, model_year := as.factor(model_year)]
     cars_dt[, origin := as.factor(origin)]
   @
+  \item[(a)] See figures \ref{fig:prob6aHistOutput}, \ref{fig:prob6aBoxplotOutput},
+  \ref{fig:prob6aPairsPlot}, \ref{fig:prob6aCoplot}, and \ref{fig:prob6aScatterplot}
+  for the histograms, boxplots, pairs plot, coplots, and scatterplots (respectively). 
   
+  For the histograms, note that all the continuous variables, with the exception
+  of \texttt{acceleration} seemed to exhibit right-skewed distributions.
+  Whereas, \texttt{acceleration}'s distribution is bell-shaped (either student's
+  $t$, or normally distributed). The majority of vehicles in this dataset have 4
+  cylinders, which is nearly double what the second most amount of cars has
+  (103 cars with 8 cylinders). Also, over 1/2 of the cars in this set came from
+  wherever $\texttt{origin} = 1$. 
+  
+  Interestingly, the boxplot of \texttt{mpg} indicates its values are not as
+  skewed as one may have previously believed from the density plot, alone.
+  However, \texttt{displacement}, \texttt{horsepower} and \texttt{weight} all
+  have medians which sit slightly south of where one would expect for 
+  ``un-skewed'' distributions.
+
   <<prob6aHistograms, echo=FALSE, results='hide'>>=
     base_layer <- ggplot(data=cars_dt)
     
@@ -297,7 +313,13 @@ opts_chunk$set(comment="#",
                    )]
   @
   
+  <<prob6aScatterplot, dev='pdf', out.width="0.85\\textwidth", fig.align='center', fig.cap="Scatterplot of \\texttt{acceleration} against \\texttt{displacement}. Number of cylinders and car origin are keyed in figured.", fig.show='hold', echo=FALSE>>=
+    ggplot(data=cars_dt, aes(y=acceleration, x=displacement)) +
+    geom_point(aes(shape=origin,color=cylinders),size=2.5, alpha=0.5) +
+    stat_smooth(method="loess", se=FALSE) +
+    labs(title=NULL) +
+    theme(legend.position="bottom")
+  @
 \end{enumerate}
-\end{proof}
 
 \end{document}
