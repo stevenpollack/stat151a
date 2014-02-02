@@ -154,6 +154,28 @@ opts_chunk$set(comment="#",
   However, \texttt{displacement}, \texttt{horsepower} and \texttt{weight} all
   have medians which sit slightly south of where one would expect for 
   ``un-skewed'' distributions.
+  
+  I chose to investigate the relationship between \texttt{mpg},
+  \texttt{displacement} (i.e. engine size) and \texttt{horsepower} because the
+  latter two variables have a large correlation (\Sexpr{cor(cars_dt$horsepower,
+  cars_dt$displacement)}), while also seeming to trend quite tightly with
+  \texttt{mpg} (correlation of \Sexpr{cor(cars_dt$mpg, cars_dt$displacement)}
+  between \texttt{mpg} and \texttt{displacement} and of \Sexpr{cor(cars_dt$mpg,
+  cars_dt$horsepower)} between \texttt{mpg} and \texttt{horsepower}). However,
+  as the plots indicate, conditioning on either one does not induce any sort of
+  independence between \texttt{mpg} and the other. On the other hand, there does
+  seem to be only a slight amount of dependence between \texttt{mpg} and
+  \texttt{acceleration} once you condition on \texttt{horsepower}. Also, if you
+  compare how the various cars' mpg vary, pound-for-pound, as a function of
+  origin, it's interesting to see that country 2 seems to do better with heavier
+  cars.
+  
+  Finally, to satisfy the high-school physicist in all of us, I decided to
+  checkout the relationship between acceleration and displacement. Initially, I
+  figured that since displacement is a rough measure of engine size, the larger
+  the value, the better acceleration a car would have. This turns out to be wildly
+  false, and the general trend is quite the opposite: smaller enginers seem to
+  have better acceleration.
 
   <<prob6aHistograms, echo=FALSE, results='hide'>>=
     base_layer <- ggplot(data=cars_dt)
@@ -298,7 +320,7 @@ opts_chunk$set(comment="#",
     pairs(cars_dt[,  !"car_name", with=FALSE], panel = panel.smooth)
   @
   
-  <<prob6aCoplot, dev='pdf', out.width="0.49\\textwidth", fig.align='center', fig.cap="Coplots examining various conditional dependences between \texttt{mpg} and other features.", fig.show='hold', echo=FALSE>>=
+  <<prob6aCoplot, dev='pdf', out.width="0.49\\textwidth", fig.align='center', fig.cap="Coplots examining various conditional dependences between \\texttt{mpg} and other features.", fig.show='hold', echo=FALSE>>=
     coplot1 <- cars_dt[, coplot(mpg ~ displacement | horsepower,
                    panel=function(x,y,...) panel.smooth(x,y,span=0.8,...)
                    )]
