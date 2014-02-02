@@ -2,6 +2,7 @@
 
 \usepackage{../mcgill}
 
+\newcommand{\Solution}{\paragraph{\textit{Solution.}}}
 % \renewcommand{\O}{\mathcal{O}}
 % \renewcommand{\Q}{\mathcal{Q}}
 % \renewcommand{\H}{\mathcal{H}}
@@ -92,6 +93,26 @@ opts_chunk$set(comment="#",
   S(A') = \sum_{i=1}^{n} (Y_i - A')^2
 \]
 
+%%-------------------------------
+\Solution
+There are a few ways to do this, but the most straightfoward is with calculus.
+
+Consider $S(A')$ like any other real-valued function of one variable. We'll
+solve for where $S'(A') = 0$, and check to see if that is a (global) minimum.
+If it is, we've found our minimizer.
+
+\begin{align*}
+  \frac{d}{dA'} S(A') &= \frac{d}{dA'} \sum_{i=1}^{n} (Y_i - A')^2 \\
+                      &= -2 \sum_{i=1}^{n} (Y_i - A') \\
+                      &= -2n \, \bar{Y} + 2n A'
+\end{align*}
+Hence, $d S(x)/ dx \bigr|_{x=A'} = 0$ precisely when $A' = \bar{Y}$.
+
+Now, to see that this is a minimum, notice that $S''(A') = 2n > 0$. Hence, the
+second derivative is positive at the critical value, implying that 
+$A' = \bar{Y}$ is a global minimum. 
+%%-------------------------------
+
 \paragraph{\#6.}
 \begin{enumerate}
   \item[(a)] Exploratory Data Analysis (EDA): Create each of the following
@@ -119,7 +140,7 @@ opts_chunk$set(comment="#",
 
 \end{enumerate}
 
-\paragraph{\textit{Solution.}}
+\Solution
 \begin{enumerate}
   <<prob6a, results='hide', echo=FALSE>>=
     setwd(dir="~/Dropbox/Berkeley/STAT151A/")
