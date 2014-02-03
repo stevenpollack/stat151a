@@ -201,6 +201,10 @@ opts_chunk$set(comment="#",
   %%-------------------------------
 \end{enumerate}
 
+\paragraph{\#2.} Write down the equations for $B_{Y|X}$ and $B_{X|Y}$ when $Y$
+and $X$ do not have the same mean and standard deviation. Intuition might
+suggest that $B_{Y|X} = 1/B_{X|Y}$. Is this true?
+
 \paragraph{\#3. -- Exercise 5.3.} *Show that $A' = \bar{Y}$ minimizes the sum of squares
 \[
   S(A') = \sum_{i=1}^{n} (Y_i - A')^2
