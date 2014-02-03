@@ -205,6 +205,19 @@ opts_chunk$set(comment="#",
 and $X$ do not have the same mean and standard deviation. Intuition might
 suggest that $B_{Y|X} = 1/B_{X|Y}$. Is this true?
 
+%%-------------------------------
+\Solution For $S_X \neq S_Y$ and $\bar{X} \neq \bar{Y}$, we have
+\[
+  B_{Y|X} = \frac{S_{XY}}{S_{X}^2} \neq \frac{S_{XY}}{S_{Y}^2} = B_{X|Y}
+\]
+In order for $B_{Y|X} = B_{X|Y}^{-1}$, we require $S_{XY}^2 = S_{X}^2 S_{Y}^2$. That is, 
+\[
+  \parenths{\dfrac{S_{XY}}{S_{X} S_{Y}}}^2 = 1 \EQ r^2 = 1
+\]
+While this isn't impossible, it doesn't happen often. In practice, $B_{Y|X} =
+S_{Y}^2 B_{X|Y} / S_{X}^2$. 
+%%-------------------------------
+
 \paragraph{\#3. -- Exercise 5.3.} *Show that $A' = \bar{Y}$ minimizes the sum of squares
 \[
   S(A') = \sum_{i=1}^{n} (Y_i - A')^2
