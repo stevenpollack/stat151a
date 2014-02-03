@@ -2,8 +2,8 @@
 .Rhistory
 .RData
 For_Instructors/*
-*.Rproj
-*.log
-*.tex
-*.gz
 *_solutions.pdf
+*.tex
+*.log
+*.synctex.gz
+*cache*
