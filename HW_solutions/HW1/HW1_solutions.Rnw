@@ -3,6 +3,10 @@
 \usepackage{../mcgill}
 
 \newcommand{\Solution}{\paragraph{\textit{Solution.}}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\one}{\mathbf{1}}
+\renewcommand{\I}{\mathbf{I}}
+
 % \renewcommand{\O}{\mathcal{O}}
 % \renewcommand{\Q}{\mathcal{Q}}
 % \renewcommand{\H}{\mathcal{H}}
@@ -47,7 +51,7 @@ opts_chunk$set(comment="#",
   knit_hooks$set(source=listing, output=listing)
 @
 
-\paragraph{Exercise 5.2} *Suppose that the means and standard deviations of $Y$ and $X$ are the same: $\bar{Y} = \bar{X}$ and $S_{Y} = S_{X}$. 
+\paragraph{\#1. -- Exercise 5.2} *Suppose that the means and standard deviations of $Y$ and $X$ are the same: $\bar{Y} = \bar{X}$ and $S_{Y} = S_{X}$. 
 
 \begin{enumerate}
   \item[(a)] Show that under these circumstances,
@@ -88,7 +92,7 @@ opts_chunk$set(comment="#",
   How could it be improved?
 \end{enumerate}
 
-\paragraph{Exercise 5.3.} *Show that $A' = \bar{Y}$ minimizes the sum of squares
+\paragraph{\#3. -- Exercise 5.3.} *Show that $A' = \bar{Y}$ minimizes the sum of squares
 \[
   S(A') = \sum_{i=1}^{n} (Y_i - A')^2
 \]
@@ -113,6 +117,111 @@ second derivative is positive at the critical value, implying that
 $A' = \bar{Y}$ is a global minimum. 
 %%-------------------------------
 
+\paragraph{\#4.} Show the statement given in the book (p. 84) that
+\[
+  \sum_{i}(Y_i - \hat{Y}_i)(\hat{Y}_i - \bar{Y}) = 0
+\]
+proving that $TSS = RSS + \text{Reg}SS$.
+
+\paragraph{\#5.} Suppose $y_1, \ldots, y_n$ are i.i.d. random variables with
+mean $\mu$ and variance $\sigma^2$. Let 
+$s^2 = \frac{1}{n-1} \sum_i (y_i - \bar{y})^2$, where 
+$\bar{y} = \frac{1}{n} \sum_{i} y_i$.
+
+\begin{enumerate}
+  \item[(a)] Show that $\sum_{i}(y_i - \bar{y})^2$ can be expressed as 
+  $ \y^{T} (\I_n - \frac{1}{n} \one_n \one_n^{T}) \y $ where $\I_n$ is the 
+  identity matrix of order $n$, and $\one_n$ is a vector of length $n$ 
+  consisting of all ones.
+  
+  %%-------------------------------
+  \Solution
+  Let's start with the vector algebra:
+  \begin{align*}
+    \frac{1}{n}\one_{n} \one_{n}^{T} \y &= \frac{1}{n} \one_{n} \ip{\one_n, \y} \\
+                                        &= \frac{1}{n} \one_{n} \sum_{i} y_i \\
+                                        &= \one_{n} \bar{y}
+    \intertext{Hence,}
+    (\I_n - \frac{1}{n}\one_{n} \one_{n}^{T}) \y &= \y - \one_{n} \bar{y} \\
+                        &= (y_1 - \bar{y}, y_2 - \bar{y}, \ldots, y_n - \bar{y})
+    \intertext{and thus}
+    \y^{T} (\I_n - \frac{1}{n}\one_{n} \one_{n}^{T}) \y
+                        &= \ip{\y, \y - \one_n \bar{y}} \\
+                        &= \sum_i y_i(y_i - \bar{y})
+  \end{align*}
+  Now, we're not quite done. Recall that
+  \[
+    \sum_i \bar{y}(y_i - \bar{y}) = \sum_{i} \bar{y} y_i - n \bar{y}^2 =
+    n \bar{y}^2 - n \bar{y}^2 = 0
+  \]
+  Hence, 
+  \begin{align*}
+    \sum_i y_i(y_i - \bar{y}) &= \sum_i (y_i - \bar{y} + \bar{y})(y_i - \bar{y}) \\
+        &= \sum_i (y_i - \bar{y})^2 + \sum_{i} \bar{y}(y_i - \bar{y}) \\
+        &= \sum_i (y_i - \bar{y})^2
+  \end{align*}
+  Which demonstrates that $\sum_i (y_i - \bar{y})^2 = \y^{T} (\I_n - \frac{1}{n}
+  \one_{n} \one_{n}^{T}) \y $. 
+  %%-------------------------------
+  \item[(b)] Use the matrix form of $s^2$ to show that $E(s^2) = \sigma^2$
+  (i.e. do not manipulate the sum directly, but use only the matrix definition).
+
+  %%-------------------------------
+  \Solution
+  Note that the result of part (a) indicates that $s^2$ can be written as a
+  quadratic form. Hence, we can use the identity
+  \[
+    E(\X^{T} A \X) = E(\X)^{T} A E(\X) + \tr(A \Sigma)
+  \]
+  where $A$ is some non-random matrix, and $\Sigma$ is $\X$'s covariance
+  matrix.\footnote{See the ``Expected value, covariance, and cross-covariance''
+  section of \href{https://en.wikipedia.org/wiki/Random_vector}{
+  https://en.wikipedia.org/wiki/Random\_vector} for a nice proof of this fact.}
+  
+  In our case, we'll take $\y$ to play the role of $\X$, $\mu \one_n$ to play
+  the role of $E(\y)$, and $\sigma^2 \I_n$ to play the role of the covariance
+  matrix. Hence, 
+  \begin{align*}
+    E\parenths{(n-1) s^2} &= E\parenths{\sum_i (y_i- \bar{y})^2 } \\
+      &= E\parenths{\y^{T}\parenths{\I_n - \frac{1}{n}\one_{n} \one_{n}^{T}} \y} \\
+      &= E(\y)^{T} \parenths{\I_n - \frac{1}{n}\one_{n} \one_{n}^{T}} E(\y)
+      + \tr\parenths{\parenths{\I_n - 
+          \frac{1}{n}\one_{n} \one_{n}^{T}} \sigma^2 \I_n} \\
+      &= \mu^2 \one_{n}^{T} \parenths{ \I_n - \frac{1}{n} \one_n \one_n^T }
+        \one_{n} + \sigma^2 \tr\parenths{ \parenths{\I_n - \frac{1}{n} \one_n^T
+          \one_{n}} \I_n }
+  \end{align*}
+  To proceed, we'll need to evaluate each term in the sum above:
+  \begin{align*}
+    \one_{n}^{T} \parenths{ \I_n - \frac{1}{n} \one_n \one_n^T } \one_{n}
+      &= \one_{n}^{T} \parenths{\one_{n} - \frac{1}{n} \one_n \one_n^T \one_{n}} \\
+      &= \parenths{\one_{n}^{T} \one_{n} - 
+          \frac{1}{n} \one_{n}^{T} \one_n \one_n^T \one_{n}} \\
+      &= \ip{\one_{n}, \one_{n}} - \frac{1}{n} \ip{\one_n, \one_n}^2 \\
+      &= n - \frac{n^2}{n} \\
+      &= 0
+    \intertext{and using the fact that $\frac{1}{n} \one_n^T \one_n$ is the
+    matrix whose entries are all $1/n$:}
+    \tr\parenths{ \parenths{\I_n - \frac{1}{n} \one_n^T \one_{n}} \I_n }
+      &= \tr\parenths{ \parenths{\I_n - \frac{1}{n} \one_n^T \one_{n}} } \\
+      &= \tr\begin{pmatrix} 1-\frac{1}{n} & -\frac{1}{n} & \cdots \\
+                             -\frac{1}{n} &1-\frac{1}{n} & \cdots \\
+                             \vdots       &              &  \ddots 
+            \end{pmatrix} \\
+      &= \sum_{i=1}^{n} 1- \frac{1}{n} \\
+      &= n-1
+  \end{align*}
+  Thus,
+  \[
+    E\parenths{(n-1)s^2} 
+      = \mu^2 \one_{n}^{T} \parenths{ \I_n - \frac{1}{n} \one_n \one_n^T } 
+        \one_{n} + \sigma^2 \tr\parenths{ \parenths{\I_n - \frac{1}{n} \one_n^T
+        \one_{n}} \I_n }
+      = \mu^2 \cdot 0 + \sigma^2 (n-1)
+  \]
+  which demonstrates that $E(s^2) = \sigma^2$. 
+  %%-------------------------------
+\end{enumerate}
 \paragraph{\#6.}
 \begin{enumerate}
   \item[(a)] Exploratory Data Analysis (EDA): Create each of the following
