@@ -122,7 +122,7 @@ opts_chunk$set(comment="#",
   is also less than average, but to a smaller extent; likewise, the expected
   height of a son whose father is taller than average is also greater than
   average, but to a smaller extent. Does this result imply a contradiction
-  -- that the standard deviation of a son's height is infact less that that
+  -- that the standard deviation of a son's height is infact less than that
   of father's height?
   
   %%-------------------------------
@@ -171,9 +171,9 @@ opts_chunk$set(comment="#",
   \item[(d)] What is the expected height for a father whose son is shorter
   than average? Of a father whose son is taller than average?
   %%-------------------------------
-  \Solution If we reverse the regression, and now regression fathers' height
-  on sons' height, because we're assuming $S_X = S_Y$ and $\bar{X} = \bar{Y}$,
-  we arrive at the same conclusion as in part (c): the expected height of a 
+  \Solution If we reverse the regression -- regress fathers' height
+  on sons' height -- because we're assuming $S_X = S_Y$ and $\bar{X} = \bar{Y}
+  $, we arrive at the same conclusion as in part (c): the expected height of a 
   father whose son is shorter (taller) than average is shorter (taller) than
   average, but to a smaller extent. 
   
