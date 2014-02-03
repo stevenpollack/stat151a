@@ -63,9 +63,54 @@ opts_chunk$set(comment="#",
   $X$ on $Y$; and $r_{XY}$ is the correlation between the two variables. Show
   that the intercepts are also the same, $A_{Y|X} = A_{X|Y}$. 
   
+  %%-------------------------------
+  \Solution
+  For the simple regression of $Y$ on $B$, $\hat{Y_i} = A + B X_i$, taking
+  \[
+    B = \dfrac{\sum_{i} (X_i - \bar{X})(Y_i - \bar{Y})}
+          {\sum_i (X_i - \bar{X})^2}
+      \equiv \dfrac{S_{XY}}{S_{X}^2}, \text{ and }
+    A = \bar{Y} - B \bar{X}
+  \]
+  where $S_X^2$ is the sample variance of $X$, gives us the coefficients that
+  minimize the least squares equation. Hence, if $S_X = S_Y$, then using the
+  symmetry of $S_{XY}$ (i.e. $S_{XY}=S_{YX}$),
+  \[
+    B_{Y|X} = \dfrac{S_{XY}}{S_{X}^2} = \dfrac{S_{XY}}{S_{X}S_{Y}}
+            = \dfrac{S_{YX}}{S_{Y}S_{X}} = B_{X|Y}
+  \]
+  And since we define $r_{XY}$ to be $S_{XY}/S_{X}S_{Y}$, it follows that
+  \[
+    B_{Y|X} = B_{X|Y} = r_{XY}
+  \]
+  Thus, if $S_X = S_Y$ \textit{and} $\bar{Y} = \bar{X}$, then
+  \[
+    A_{Y|X} = \bar{Y} - B_{Y|X} \bar{X} = \bar{X} - B_{X|Y} \bar{Y} = A_{X|Y}
+  \]
+  %%-------------------------------
+  
   \item[(b)] Why, if $A_{Y|X} = A_{X|Y}$ and $B_{Y|X} = B_{X|Y}$, is the
   least-squares line for the regression of $Y$ on $X$ different from the line
   from the regression of $X$ on $Y$ (as long as $r^2 < 1$)?
+  
+  %%-------------------------------
+  \Solution
+  Denote the line for the regression of $Y$ on $X$ is by $f(x) = A_{Y|X} +
+  B_{Y|X} x$. If we try inverting this line, and solving for $x$ as a function
+  of $f(x)$, we get 
+  \[
+    h(f(x)) = (f(x) - A_{Y|X})/B_{Y|X} = B_{Y|X}^{-1}f(x) - \frac{A_{Y|X}}{B_{Y|X}}
+  \]
+  If we let $g(y) = A_{X|Y} + B_{X|Y} y$ denote the line for the regression of
+  $X$ on $Y$, then for $h(y) = g(y)$, we would need
+  \[
+    B_{Y|X}^{-1} = B_{X|Y}, \text{ and } A_{X|Y} = - \frac{A_{Y|X}}{B_{Y|X}}
+  \]
+  Since we're still assuming equal means and variances, the first condition
+  is equivalent to asking for $B_{X|Y}^2 = 1$, or $r^2 = 1$. However, we're
+  assuming that $r^2 < 1$, so this situation cannot be. Thus, we cannot have
+  equal regression lines.
+  %%-------------------------------
   
   \item[(c)] "Regression toward the mean" (the original sense of the term
   "regression"): Imagine that $X$ is father's height and $Y$ is son's height
@@ -80,9 +125,59 @@ opts_chunk$set(comment="#",
   -- that the standard deviation of a son's height is infact less that that
   of father's height?
   
+  %%-------------------------------
+  \Solution
+  Recall that when we perform regression, we're actually make a statement about
+  the conditional mean of one variable given another. Precisely, $\hat{Y}$ is
+  supposed to estimate $E(Y | X)$. So, if we translate the phrase, ``the
+  expected height of a son whose father is shorter than average is also less
+  than average, but to a smaller extent'' into symbols, it will read:
+  \[
+    0 < \bar{Y} - E(Y_i | X_i < \bar{X}) < \bar{X} - X_i
+  \]
+  Hence, if we can prove $0 < \bar{Y} - \hat{Y}_i < \bar{X} - X_i$, when $X_i$
+  is less than average, we're done.
+  Using the results from part (a), and the assumption that $r_{XY} \in (0,1)$,
+  \begin{align*}
+    \bar{Y} - \hat{Y}_i &= \bar{Y} - (A + B X_i) \\
+      &= \bar{Y} - \parenths{\bar{Y} + r_{XY}(X_i - \bar{X})} \\
+      &= r_{XY}(\bar{X} - X_i) \\
+      &< \bar{X} - X_i
+    \intertext{and using $r > 0$:}
+    \bar{Y} - \hat{Y}_i &= r_{XY}(\bar{X} - X_i) > 0
+  \end{align*}
+  Hence,
+  \[
+    0 < \bar{Y} - \hat{Y}_i < X_i - \bar{X}
+  \]
+  Similarly, if $X_i - \bar{X} > 0$, 
+  \begin{align*}
+    \hat{Y}_i - \bar{Y} &=  \parenths{\bar{Y} + r_{XY}(X_i - \bar{X}) } 
+                        - \bar{Y} \\
+      &= r_{XY}(X_i - \bar{X}) \\
+      &< (X_i - \bar{X})
+    \intertext{and}
+    \hat{Y}_i - \bar{Y} &= r_{XY}(X_i - \bar{X}) > 0
+  \end{align*}
+  
+  Now, while this results shows that for all $i$, $(\hat{Y}_i - \bar{Y})^2 <
+  (X_i - \bar{X})^2$, this does \textit{not} imply that $(Y_i - \bar{Y})^2 < 
+  (X_i - \bar{X})^2$. The latter expression involves observed values, while
+  the former expression involves \textit{expected values}. Hence, while we may
+  say that the $\text{Reg}SS$ is less than the $(n-1) S_{X}^2$, we do not have
+  the license to say that $S_{Y}^{2} < S_{X}^2$. 
+  %%-------------------------------
+
   \item[(d)] What is the expected height for a father whose son is shorter
   than average? Of a father whose son is taller than average?
+  %%-------------------------------
+  \Solution If we reverse the regression, and now regression fathers' height
+  on sons' height, because we're assuming $S_X = S_Y$ and $\bar{X} = \bar{Y}$,
+  we arrive at the same conclusion as in part (c): the expected height of a 
+  father whose son is shorter (taller) than average is shorter (taller) than
+  average, but to a smaller extent. 
   
+  %%-------------------------------
   \item[(e)] Regression effects in research design: Imagine that educational
   researchers wish to assess the efficacy of a new program to improve the
   reading performance of children. To test the program, they recruit a group
@@ -90,6 +185,20 @@ opts_chunk$set(comment="#",
   in the program, the researchers observe that the children, on average, have
   improved their reading performance. Why is this a weak research design?
   How could it be improved?
+  %%-------------------------------
+  \Solution
+  As we saw in part (c), children of short men tend to get raised up to the
+  mean. Hence, if we consider $X_i$ the reading performance of a child at the
+  start of the program of $Y_i$ their performance a year later, then by what
+  we just proved, we should expect $Y_i$ to be closer to the mean than $X_i$. 
+  In particular, we expect $Y_i$ to be higher, on average, since the children
+  were chosen such that $X_i < \bar{X}$. 
+  
+  One way to improve this design is to sample from both the strong and weak
+  readers, and then review their performances a year later. If both groups
+  exhibit a significant difference, then we may be able to assess the efficacy
+  of the program.
+  %%-------------------------------
 \end{enumerate}
 
 \paragraph{\#3. -- Exercise 5.3.} *Show that $A' = \bar{Y}$ minimizes the sum of squares
@@ -125,14 +234,7 @@ proving that $TSS = RSS + \text{Reg}SS$.
 
 %%-------------------------------
 \Solution
-For the simple regression, $\hat{Y_i} = A + B X_i$, it follows that
-\[
-  B = \dfrac{\sum_{i} (X_i - \bar{X})(Y_i - \bar{Y})}
-        {\sum_i (X_i - \bar{X})^2}
-    \equiv \dfrac{S_{XY}}{S_{X}^2}, \text{ and }
-  A = \bar{Y} - B \bar{X}
-\]
-gives us the coefficients that minimizes the least squares equation. Hence,
+Using the least-squares coefficients defined in problem \#1,
 \begin{align*}
   \sum_i (Y_i - \hat{Y}_i)(\hat{Y}_i - \bar{Y}) &=
     \sum_i \parenths{Y_i - \bar{Y} - \frac{S_{XY}}{S_{X}^2}(X_i - \bar{X})}
