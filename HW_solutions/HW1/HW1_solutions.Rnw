@@ -123,6 +123,30 @@ $A' = \bar{Y}$ is a global minimum.
 \]
 proving that $TSS = RSS + \text{Reg}SS$.
 
+%%-------------------------------
+\Solution
+For the simple regression, $\hat{Y_i} = A + B X_i$, it follows that
+\[
+  B = \dfrac{\sum_{i} (X_i - \bar{X})(Y_i - \bar{Y})}
+        {\sum_i (X_i - \bar{X})^2}
+    \equiv \dfrac{S_{XY}}{S_{X}^2}, \text{ and }
+  A = \bar{Y} - B \bar{X}
+\]
+gives us the coefficients that minimizes the least squares equation. Hence,
+\begin{align*}
+  \sum_i (Y_i - \hat{Y}_i)(\hat{Y}_i - \bar{Y}) &=
+    \sum_i \parenths{Y_i - \bar{Y} - \frac{S_{XY}}{S_{X}^2}(X_i - \bar{X})}
+      \parenths{\frac{S_{XY}}{S_X^2}(X_i - \bar{X})} \\
+    &= \sum_i \frac{S_{XY}}{S_{X}^2} (Y_i - \bar{Y})(X_i - \bar{X})
+      - \parenths{\frac{S_{XY}}{S_{X}^2}}^2 (X_i - \bar{X})^2 \\
+    &= \frac{S_{XY}}{S_{X}^2} \sum_i (Y_i - \bar{Y})(X_i - \bar{X})
+        - \parenths{\frac{S_{XY}}{S_{X}^2}}^2 \sum_i (X_i - \bar{X})^2 \\
+    &= \frac{S_{XY}}{S_{X}^2} S_{XY}
+        - \parenths{\frac{S_{XY}}{S_{X}^2}}^2 S_{X}^2 \\
+    &= 0
+\end{align*}
+%%-------------------------------
+
 \paragraph{\#5.} Suppose $y_1, \ldots, y_n$ are i.i.d. random variables with
 mean $\mu$ and variance $\sigma^2$. Let 
 $s^2 = \frac{1}{n-1} \sum_i (y_i - \bar{y})^2$, where 
