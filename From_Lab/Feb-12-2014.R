@@ -1,6 +1,7 @@
 ### Outline:
 ### 1) Multivariate normal
 ###   https://en.wikipedia.org/wiki/Multivariate_normal
+### 2) correlation between \hat{\beta}'s.
 
 #####
 # Multiple plot function 
@@ -107,5 +108,75 @@ mu2 <- c(7,2)
 h2 <- 3
 
 generateAndPlotBivariateNormal(mu2, Sigma2, h2)
+
+### go over some other sigma's.
+
+### 2) Beta hat's...
+
+### covariance structure of Beta's is sigma^2 ( X^T * X )^{-1}
+
+### To perform our simulation study we'll need to
+###
+### 1. Create a design matrix, X
+### 2. Create a (true) vector of coefficients, beta
+### 3. Generate 1000, IID error vectors e
+### 4. Make 1000, different, Y's according to the model Y = X %*% beta + e
+###
+### We'll then look at the properties of each betaHat calculated from the
+### different Y's that we made with the different e's. 
+
+### load parallel frame work to speed things up
+library(doParallel)
+registerDoParallel(cores=detectCores())
+
+set.seed(1234)
+simulationLength <- 1000
+
+### make the design matrix
+X <- cbind(1, rchisq(n=100, df=3))
+X_t <- t(X)
+### make the model parameters
+beta <- c(-1,3)
+### generate the errors and Y's
+response <- foreach(i=seq.int(simulationLength),.combine=cbind) %dopar% {
+  e <- rexp(n=100, rate=0.5) # errors have mean=2, var=4
+  Y <- X %*% beta + e
+  return(Y)
+}
+
+### calculate betaHat for each response vector
+betaHats <- foreach(Y=iter(response,by='column'),.combine=rbind) %dopar% {
+  betaHat <- as.vector(solve(X_t %*% X) %*% X_t %*% Y)
+  return(betaHat)
+}
+
+### check out empirical variance of betaHats
+var(betaHats)
+
+### compare this to theoretical variance
+4*solve(X_t %*% X)
+
+### checkout plots
+library(ggplot2)
+
+baseLayer <- ggplot(data=as.data.frame(betaHats))
+scatterPlot <- baseLayer + geom_point(aes(x=V1, y=V2),shape=1,alpha=0.5) +
+                stat_density2d(aes(x=V1, y=V2),h=0.25) +
+                labs(x=expression(beta[0]), y=expression(beta[1])) 
+beta0Hist <- baseLayer +
+              geom_histogram(aes(x=V1, y=..density..),binwidth=0.08,alpha=0.5) +
+              stat_density(aes(x=V1),fill=NaN,color='darkred') +
+              labs(x=expression(beta[0]),
+                   title=paste("mean =", mean(betaHats[,1]), "... and true value =", beta[1]))
+beta1Hist <- baseLayer +
+              geom_histogram(aes(x=V2, y=..density..),binwidth=0.02,alpha=0.5) +
+              stat_density(aes(x=V2),fill=NaN,color='darkred') +
+              labs(x=expression(beta[1]),
+                   title=paste("sample mean =", mean(betaHats[,2]), "... true value =", beta[2]))
+
+
+scatterPlot
+              +
+
 
 
