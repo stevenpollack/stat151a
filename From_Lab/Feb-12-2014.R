@@ -90,7 +90,7 @@ generateAndPlotBivariateNormal <- function(mu, Sigma, h, verbose=FALSE) {
   xTitle <- bquote(expression( paste(mu, " = ", .(mu[1]), ", ", sigma^2, " = ", .(Sigma[1,1]), sep="")))
   yTitle <- bquote(expression( paste(mu, " = ", .(mu[2]), ", ", sigma^2, " = ", .(Sigma[2,2]), sep="")))
   
-  densityContour <- ggplot(data=df, aes(x=X,y=Y)) + geom_point(shape=1,alpha=0.5) + stat_density2d(h=h, color='darkred')
+  densityContour <- ggplot(data=df, aes(x=X,y=Y)) + geom_point(shape=1,alpha=0.5) + stat_density2d(color='darkred')
   xDensity <- ggplot(data=df) + stat_density(aes(x=X), adjust=1.5) + labs(title=eval(xTitle))
   yDensity <- ggplot(data=df) + stat_density(aes(x=Y), adjust=1.5) + labs(title=eval(yTitle))
   
@@ -108,6 +108,13 @@ mu2 <- c(7,2)
 h2 <- 3
 
 generateAndPlotBivariateNormal(mu2, Sigma2, h2)
+
+Sigma3 <- matrix(c(0.5, -0.4*sqrt(0.5*0.05), -0.4*sqrt(0.5*0.05), 0.05), nrow=2)
+mu3 <- c(2,7)
+h3 <- 3
+
+generateAndPlotBivariateNormal(mu3, Sigma3, NULL)
+
 
 ### go over some other sigma's.
 
