@@ -2,3 +2,110 @@
 ### 1) Multivariate normal
 ###   https://en.wikipedia.org/wiki/Multivariate_normal
 
+#####
+# Multiple plot function 
+# http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot
+# objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+#####
+
+generateBivariateSigmaFromRho <- function(rho, sigma_x=1, sigma_y=1) {
+  stopifnot(-1 <= rho & rho <= 1)
+  matrix(c(sigma_x^2, rho*sigma_x*sigma_y, rho*sigma_x*sigma_y, sigma_y^2),
+         nrow=2)
+}
+
+calculateRhoFromSigma <- function(Sigma, verbose=FALSE) {
+  stopifnot(eigen(Sigma,symmetric=TRUE,only.values=TRUE)$values > 0)
+  varX <- Sigma[1,1]; varY <- Sigma[2,2]
+  rho <- Sigma[1,2] / sqrt(varX * varY)
+  if (verbose) {
+    angle <- atan(sqrt(varX / varY)) * 180 / pi
+    print(paste("Angle between X and Y is:", angle))
+  }
+  return(rho)
+}
+
+generateAndPlotBivariateNormal <- function(mu, Sigma, h, verbose=FALSE) {
+  stopifnot(t(Sigma) == Sigma)
+  stopifnot(h > 0)
+  
+  require(MASS)
+  require(ggplot2)
+  
+  set.seed(1234)
+  X <- mvrnorm(n=1000, mu=mu, Sigma=Sigma)
+  df <- data.frame(X=X[,1], Y=X[,2])
+  
+  if (verbose) {
+    cat("Sample correlation matrix for X and Y: \n")
+    print(cor(df))
+    print(paste("rho is", calculateRhoFromSigma(Sigma, verbose)))
+  }
+    
+  xTitle <- bquote(expression( paste(mu, " = ", .(mu[1]), ", ", sigma^2, " = ", .(Sigma[1,1]), sep="")))
+  yTitle <- bquote(expression( paste(mu, " = ", .(mu[2]), ", ", sigma^2, " = ", .(Sigma[2,2]), sep="")))
+  
+  densityContour <- ggplot(data=df, aes(x=X,y=Y)) + geom_point(shape=2,alpha=0.5) + stat_density2d(h=h, color='darkred')
+  xDensity <- ggplot(data=df) + stat_density(aes(x=X), adjust=1.5) + labs(title=eval(xTitle))
+  yDensity <- ggplot(data=df) + stat_density(aes(x=Y), adjust=1.5) + labs(title=eval(yTitle))
+  
+  multiplot(densityContour, xDensity, yDensity, layout=matrix(c(1,2,1,3),2))
+}
+
+Sigma1 <- matrix(c(4,1.75,1.75,1),nrow=2)
+mu1 <- c(7,2)
+h1 <- 3
+
+generateAndPlotBivariateNormal(mu1, Sigma1, h1, verbose=TRUE)
+
+Sigma2 <- matrix(c(0.25,0.2,0.2,1),nrow=2)
+mu2 <- c(7,2)
+h2 <- 3
+
+generateAndPlotBivariateNormal(mu2, Sigma2, h2)
+
+
