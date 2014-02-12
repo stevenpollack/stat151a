@@ -90,7 +90,7 @@ generateAndPlotBivariateNormal <- function(mu, Sigma, h, verbose=FALSE) {
   xTitle <- bquote(expression( paste(mu, " = ", .(mu[1]), ", ", sigma^2, " = ", .(Sigma[1,1]), sep="")))
   yTitle <- bquote(expression( paste(mu, " = ", .(mu[2]), ", ", sigma^2, " = ", .(Sigma[2,2]), sep="")))
   
-  densityContour <- ggplot(data=df, aes(x=X,y=Y)) + geom_point(shape=2,alpha=0.5) + stat_density2d(h=h, color='darkred')
+  densityContour <- ggplot(data=df, aes(x=X,y=Y)) + geom_point(shape=1,alpha=0.5) + stat_density2d(h=h, color='darkred')
   xDensity <- ggplot(data=df) + stat_density(aes(x=X), adjust=1.5) + labs(title=eval(xTitle))
   yDensity <- ggplot(data=df) + stat_density(aes(x=Y), adjust=1.5) + labs(title=eval(yTitle))
   
@@ -113,8 +113,6 @@ generateAndPlotBivariateNormal(mu2, Sigma2, h2)
 
 ### 2) Beta hat's...
 
-### covariance structure of Beta's is sigma^2 ( X^T * X )^{-1}
-
 ### To perform our simulation study we'll need to
 ###
 ### 1. Create a design matrix, X
@@ -136,11 +134,11 @@ simulationLength <- 1000
 X <- cbind(1, rchisq(n=100, df=3))
 X_t <- t(X)
 ### make the model parameters
-beta <- c(-1,3)
+beta <- c(2,3)
 ### generate the errors and Y's
 response <- foreach(i=seq.int(simulationLength),.combine=cbind) %dopar% {
   e <- rexp(n=100, rate=0.5) # errors have mean=2, var=4
-  Y <- X %*% beta + e
+  Y <- X %*% beta + (e-2)
   return(Y)
 }
 
@@ -167,16 +165,14 @@ beta0Hist <- baseLayer +
               geom_histogram(aes(x=V1, y=..density..),binwidth=0.08,alpha=0.5) +
               stat_density(aes(x=V1),fill=NaN,color='darkred') +
               labs(x=expression(beta[0]),
-                   title=paste("mean =", mean(betaHats[,1]), "... and true value =", beta[1]))
+                   title=paste("mean =", round(mean(betaHats[,1]),3), "... true value =", beta[1]))
 beta1Hist <- baseLayer +
               geom_histogram(aes(x=V2, y=..density..),binwidth=0.02,alpha=0.5) +
               stat_density(aes(x=V2),fill=NaN,color='darkred') +
               labs(x=expression(beta[1]),
-                   title=paste("sample mean =", mean(betaHats[,2]), "... true value =", beta[2]))
+                   title=paste("mean =", round(mean(betaHats[,2]),3), "... true value =", beta[2]))
 
-
-scatterPlot
-              +
+multiplot(scatterPlot, beta0Hist, beta1Hist, layout=matrix(c(1,2,1,3),2))
 
 
 
