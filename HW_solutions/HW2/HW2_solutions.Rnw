@@ -1,0 +1,152 @@
+\documentclass[10pt,titlepage]{article}
+
+\usepackage{../mcgill}
+
+\newcommand{\Solution}{\paragraph{\textit{Solution.}}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\x}{\mathbf{x}}
+\renewcommand{\b}{\mathbf{b}}
+\newcommand{\one}{\mathbf{1}}
+\renewcommand{\I}{\mathbf{I}}
+
+% \renewcommand{\O}{\mathcal{O}}
+% \renewcommand{\Q}{\mathcal{Q}}
+% \renewcommand{\H}{\mathcal{H}}
+% \renewcommand{\N}{\mathcal{N}}
+
+\begin{document}
+<<globalParameters,echo=FALSE,cache=FALSE>>=
+set.seed(1234)
+opts_chunk$set(comment="#",
+               tidy=FALSE,
+               warning=FALSE,
+               message=FALSE,
+               highlight=TRUE,
+               echo=TRUE,
+               cache=TRUE)
+@
+
+%%%%% knitr code to make sure things stay inside listings box:
+<<stayInside,echo=FALSE>>=
+  options(width=60)
+  listing <- function(x, options) {
+     paste("\\begin{lstlisting}[basicstyle=\\ttfamily,breaklines=true]\n",
+           x,"\\end{lstlisting}\n", sep = "")
+  }
+  
+  knit_hooks$set(source=listing, output=listing)
+@
+
+\paragraph{\#1. -- Exercise 9.6} Using the general result 
+$V(\mathbf{b}) = \sigma_{\eps}^{2}(\X'\X)^{-1}$, show that the sampling 
+variances of $A$ and $B$ in simple-regression analysis are
+\begin{align*}
+V(A) &= \frac{\sigma^{2}_{\eps} \sum X_{i}^2}{n \sum (X_i - \bar{X})^2} \\
+V(B) &=  \frac{\sigma^{2}_{\eps} }{ \sum (X_i - \bar{X})^2} \\
+\end{align*}
+%%-------------------------------
+\Solution
+When $\X = (\one_{n} \mid X)$, where $X \in \R^{n}$, we have that 
+\[
+\X'\X = \begin{pmatrix} \one_{n}' \\ X' \end{pmatrix} (\one_{n} \mid X) 
+  = \begin{pmatrix}
+      \one_{n}'\one_{n} & \one_{n}'X \\
+      X'\one_n & X'X
+    \end{pmatrix}
+  = \begin{pmatrix}
+      n & n\bar{X} \\
+    n\bar{X} & \sum_i X_i^2
+    \end{pmatrix}
+\]
+Hence,
+\[
+\left(\X'\X\right)^{-1} = \frac{1}{n\sum_i X_i^2 - \left(n \bar{X}\right)^2}
+\begin{pmatrix}
+\sum_i X_i^2 & -n\bar{X} \\
+-n\bar{X} & n
+\end{pmatrix}
+\]
+Now, observe that
+\[
+n\sum_i X_i^2 - \left(n \bar{X}\right)^2 = 
+  n\left(\sum_i X_{i}^2 - \bar{X}\sum_i X_i\right) =
+  n\sum_i \left(X_i - \bar{X}\right)^2
+\]
+Thus,
+\[
+\Sigma \equiv \sigma_{\eps}^{2}\left(\X'\X\right)^{-1} =
+  \frac{\sigma_{\eps}^{2}}{n\sum_i(X_i - \bar{X})^2}
+  \begin{pmatrix} \sum_i X_i^2 & -n\bar{X} \\ -n\bar{X} & n \end{pmatrix}
+\]
+Which shows that
+\begin{align*}
+V(A) &= \Sigma_{11} = \frac{\sigma^{2}_{\eps} \sum_i X_{i}^2}
+                            {n \sum (X_i - \bar{X})^2} \\
+V(B) &=  \Sigma_{22} = \frac{\sigma^{2}_{\eps} }{ \sum_i (X_i - \bar{X})^2} \\
+\end{align*}
+%%-------------------------------
+
+\paragraph{\#2. -- Exercise 9.14} (Note: all the values you need for (c) and 
+(d) are given in \S 5.2) Prediction: One use of a fitted regression equation is
+to \textit{predict} response-variable values for particular ``future''
+combinations of explanatory-variable scores. Suppose, therefore, that we fit
+the model $\y = \X\beta + \eps$, obtaining the least-squares estimate 
+$\mathbf{b}$ of $\beta$. Let, $\x_{0}'=[1,x_{01}, \ldots, x_{0k}]$ represent a
+set of explanatory-variable scores for which a prediction is desired, and let
+$Y_0$ be the (generally unknown, or not-eyet known) corresponding value of $Y$.
+The explanatory-variable vector $\x_0'$ does not necessarily correspond to an
+observation in the sample for which the model was fit.
+\begin{enumerate}
+  \item[(a)] *If we use $\hat{Y}_0 = \x_0' \b$ to estimate $E(Y_0)$, then the
+  error in estimation is $\delta \equiv \hat{Y}_0 - E(Y_0)$. Show that if the
+  model is correct, then $E(\delta) = 0$ [i.e., $\hat{Y}_0$ is an unbiased
+  estimator of $E(Y_0)$] and that $V(\delta) = \sigma_{\eps}^2 
+  \x_0'(\X'\X)^{-1}\x_0$. 
+  \item[(b)] *We may be interested not in estimating the expected value of
+  $Y_0$ but in predicting or forecasting the \textit{actual} value $Y_0 = 
+  \x_0' \beta + \eps_0$ that will be observed. The error in the forecast is
+  then
+  \[
+  D \equiv \hat{Y}_0 - Y_0 = \x'_0(\b - \beta) - \eps_0
+  \]
+  Show that $E(D) = 0$ and that $V(D) = \sigma_{\eps}^2[1 +
+  \x_0'(\X'\X)^{-1}\x_0]$. Why is the variance of the forecast error $D$
+  greater than the variance of $\delta$ found in part (a)?
+  \item[(c)] Use the results in parts (a) and (b), along with the Canadian
+  occupational prestige regression (see \S 5.2.2), to predict the prestige
+  score for an occupation with an average income of \$12,000, and average
+  education of 13 years, and 50\% women. Place a 90\% confidence interval
+  around the prediction assuming (i) that you wish to estimate $E(Y_0)$, and
+  (ii) that you wish to forecast an actual $Y_0$ score. (Because 
+  $\sigma_{\eps}^{2}$ is not known, you will need to use $S_{E}^2$ and the 
+  $t$-distribution.)
+  \item[(d)] Suppose that the methods of this problem are used to forecast a
+  value of $Y$ for a combination of $X$'s very different from the $X$ values in
+  the data to which the model was fit. For example, calculate the estimated
+  variance of the forecast error for an occupation with an average income of
+  \$50,000, an average education of 0 years, and 100\% women. Is the estimated
+  variance of the forecast error large or small? Does the variance of the
+  forecast error adequately capture the uncertainty in using the regression
+  equation to predict $Y$ in this circumstance?
+\end{enumerate}
+  %%-------------------------------
+  \Solution
+  %%-------------------------------
+\paragraph{\#3.} Show that in the linear model, the square of the (sample)
+correlation between the response values $(y_1, \ldots, y_n)$ and the fitted
+values $(\hat{y}_1, \ldots, \hat{y}_{n})$ equals the coefficient of
+determination, $R^{2}$. 
+  %%-------------------------------
+  \Solution
+  %%-------------------------------
+\paragraph{\#4. -- Exercise 11.1} *Show that, in simple-regression analsis,
+the hat-value is
+\[
+h_i = \frac{1}{n} + \frac{(X_i - \bar{X})^2}{\sum_{j=1}^{n}(X_j - \bar{X})^2}
+\]
+[\Hint Evaluate $\x_i'(\X'\X)^{-1} \x_i$ for $\x_i' = (1,X_i)$.]
+  %%-------------------------------
+  \Solution
+  %%-------------------------------
+  
+\end{document}
