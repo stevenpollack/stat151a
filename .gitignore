@@ -7,3 +7,4 @@ For_Instructors/*
 *.log
 *.synctex.gz
 *cache*
+HW_solutions/*/figure
