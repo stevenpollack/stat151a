@@ -344,16 +344,36 @@ observation in the sample for which the model was fit.
   variance of the forecast error large or small? Does the variance of the
   forecast error adequately capture the uncertainty in using the regression
   equation to predict $Y$ in this circumstance?
-\end{enumerate}
   %%-------------------------------
   \Solution
+  <<>>=
+  x_1 <- c(1, 0, 50000, 100)
+  Y_hat <- as.vector(x_1 %*% b)
+  cat(paste("Y_hat:", Y_hat))
+
+  var_delta_1 <- S_E^2 * x_1 %*% XTX_inv %*% x_1 
+  var_D_1 <- S_E^2 * (1 + x_1 %*% XTX_inv %*% x_1 )
+  cat(paste("var(delta): ", var_delta_1, "\nvar(D): ", var_D_1, sep=""))
+  @
+  For some comparison, $\var(D) = \Sexpr{var_D}$ for the forecast in part (d),
+  where as the forecast variance, here, is $\Sexpr{var_D_1}$ (which is over
+  $\Sexpr{round(var_D_1/var_D,0)}$ times larger). I'd feel comfortable saying
+  that this error is very large. In fact, this kind of uncertainty is exactly
+  what we should expect, given that there's are no occupations in this dataset
+  that have characteristics anywhere near the \$50k salary, 0 years of school
+  and 100\% women category. We're making a huge leap, here, trying to perform
+  this extrapolation, and consequently we pay the price with a massive amount
+  of uncertainty.
   %%-------------------------------
+\end{enumerate}
+
 \paragraph{\#3.} Show that in the linear model, the square of the (sample)
 correlation between the response values $(y_1, \ldots, y_n)$ and the fitted
 values $(\hat{y}_1, \ldots, \hat{y}_{n})$ equals the coefficient of
 determination, $R^{2}$. 
   %%-------------------------------
   \Solution
+  
   %%-------------------------------
 \paragraph{\#4. -- Exercise 11.1} *Show that, in simple-regression analsis,
 the hat-value is
