@@ -381,8 +381,45 @@ the hat-value is
 h_i = \frac{1}{n} + \frac{(X_i - \bar{X})^2}{\sum_{j=1}^{n}(X_j - \bar{X})^2}
 \]
 [\Hint Evaluate $\x_i'(\X'\X)^{-1} \x_i$ for $\x_i' = (1,X_i)$.]
-  %%-------------------------------
-  \Solution
-  %%-------------------------------
+%%-------------------------------
+\renewcommand{\H}{\mathbf{H}}
+\Solution
+Recall that since $\H = \X (\X'\X)^{-1} \X$, the $i$th diagonal entry, $h_{i}$,
+is given by
+\[
+h_{i} = \x_i'(\X'\X)^{-1}\x_i
+\]
+Now, the solution to \#1 demonstrated that, in the case of simple-regression,
+\[
+\left(\X'\X\right)^{-1} = \frac{1}{n\sum_i (X_i - \bar{X})^2}
+\begin{pmatrix}
+\sum_i X_i^2 & -n\bar{X} \\
+-n\bar{X} & n
+\end{pmatrix}
+\]
+Hence, for $\x_i' = (1, X_i)$:
+\begin{align*}
+h_{i} &= \x_{i}' \left(\X'\X\right)^{-1} \x_{i} \\
+  &= \frac{1}{n\sum_i (X_i - \bar{X})^2}
+  (1, X_i)
+  \begin{pmatrix}
+  \sum_i X_i^2 & -n\bar{X} \\
+  -n\bar{X} & n
+  \end{pmatrix}
+  \begin{pmatrix} 1 \\ X_i \end{pmatrix} \\
+  &= \frac{1}{n\sum_i (X_i - \bar{X})^2}
+  (1, X_i)
+  \begin{pmatrix} \sum_i X_i^2 - n X_i\bar{X} \\ -n\bar{X} + n X_i
+  \end{pmatrix} \\
+  &= \frac{\sum_i X_i^2 - 2nX_i\bar{X} + n X_i^2}{n\sum_i (X_i - \bar{X})^2} \\
+  &= \frac{\sum_i X_i^2 +n\left((X_i-\bar{X})^2 - \bar{X}^2\right)}{
+  n\sum_i (X_i - \bar{X})^2} \\
+  &= \frac{\sum_i X_i^2 -n\bar{X}^2 +n(X_i-\bar{X})^2}{
+  n\sum_i (X_i - \bar{X})^2} \\
+  &= \frac{\sum_i X_i^2 -n\bar{X}^2}{n\sum_i (X_i - \bar{X})^2} + 
+  \frac{(X_i-\bar{X})^2}{\sum_i (X_i - \bar{X})^2} \\
+  &= \frac{1}{n} + \frac{(X_i-\bar{X})^2}{\sum_i (X_i - \bar{X})^2}
+\end{align*}
+%%-------------------------------
   
 \end{document}
