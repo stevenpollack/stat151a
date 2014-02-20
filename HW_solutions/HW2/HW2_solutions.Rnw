@@ -373,7 +373,63 @@ values $(\hat{y}_1, \ldots, \hat{y}_{n})$ equals the coefficient of
 determination, $R^{2}$. 
   %%-------------------------------
   \Solution
-  
+  Recall that (as a consequence of the normal equations), we have residuals
+  with zero mean. That is,
+  \[
+  0 = \frac{1}{n}\SUM{i}{1}{n} r_i 
+    =\frac{1}{n}\SUM{i}{1}{n}(y_i -\hat{y}_i) 
+  \EQ
+  \bar{y} = \overline{\hat{y}}
+  \]
+  Now, the square (sample) correlation, $\rho_{y\hat{y}}^2$ is given by
+  \[
+  \rho_{y\hat{y}}^{2} = 
+    \dfrac{\left(
+          \SUM{i}{1}{n}
+            (\hat{y}_i - \overline{\hat{y}})(y_i -\bar{y})
+          \right)^2}
+          { \SUM{i}{1}{n}(\hat{y}_i - \overline{\hat{y}})^2
+          \SUM{i}{1}{n}(y_i - \bar{y})^2}
+  \]
+  However, by our first observation, we can rewrite the sum in the numerator as
+  \begin{align*}
+    \SUM{i}{1}{n}(\hat{y}_i - \overline{\hat{y}})(y_i -\bar{y})
+      &= \SUM{i}{1}{n}(\hat{y}_i - \bar{y})(y_i -\bar{y}) \\
+      &= \SUM{i}{1}{n}(\hat{y}_i - \bar{y})(y_i - \hat{y}_i 
+      + \hat{y}_i -\bar{y}) \\
+      &= \SUM{i}{1}{n}(\hat{y}_i - \bar{y})(y_i - \hat{y}_i) + 
+      \SUM{i}{1}{n}(\hat{y}_i - \bar{y})(\hat{y}_i -\bar{y}) \\
+      &= \SUM{i}{1}{n}(\hat{y}_i - \bar{y})(\hat{y}_i -\bar{y}) \\
+      &= \SUM{i}{1}{n}(\hat{y}_i - \bar{y})^2
+  \end{align*}
+  Where the second to last equation follows from the identity proven in
+  question \#3 (on homework \#1). Substituting the result above, back into
+  our equation for $\rho_{y\hat{y}}^2$, and (again) using the result that
+  $\overline{\hat{y}} = \bar{y}$, we have
+  \begin{align*}
+    \rho_{y\hat{y}}^{2} &= 
+    \dfrac{\left(
+          \SUM{i}{1}{n}
+            (\hat{y}_i - \overline{\hat{y}})(y_i -\bar{y})
+          \right)^2}
+          { \SUM{i}{1}{n}(\hat{y}_i - \overline{\hat{y}})^2
+          \SUM{i}{1}{n}(y_i - \bar{y})^2} \\
+          &=  \dfrac{\left(
+          \SUM{i}{1}{n}
+            (\hat{y}_i - \bar{y})^2 \right)^2}
+          { \SUM{i}{1}{n}(\hat{y}_i - \bar{y})^2
+          \SUM{i}{1}{n}(y_i - \bar{y})^2} \\
+          &= \dfrac{\SUM{i}{1}{n}(\hat{y}_i - \bar{y})^2}
+          {\SUM{i}{1}{n}(y_i - \bar{y})^2}
+  \end{align*}
+  And, now we're done since $SS_{Reg} = \SUM{i}{1}{n}(\hat{y}_i - \bar{y})^2$,
+  $SS_{tot} = \SUM{i}{1}{n}(y_i - \bar{y})^2$, and
+  \[
+    R^2 = \frac{SS_{Reg}}{SS_{tot}} 
+      = \dfrac{\SUM{i}{1}{n}(\hat{y}_i - \bar{y})^2}
+        {\SUM{i}{1}{n}(y_i - \bar{y})^2}
+      = \rho_{y\hat{y}}^2
+  \]
   %%-------------------------------
 \paragraph{\#4. -- Exercise 11.1} *Show that, in simple-regression analsis,
 the hat-value is
