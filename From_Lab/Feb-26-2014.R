@@ -24,6 +24,7 @@
 # out the affect of adding income to the model.
 
 library(car) # contains Duncan's occupation data, and avPlots
+data(Duncan)
 
 baseModel <- lm(prestige ~ education, data=Duncan)
 summary(baseModel)
@@ -221,22 +222,6 @@ calcR2Increase(baseModel, extendedModel2) # about 21%
 # addition of predictors (assuming you're adding new predictors that aren't 
 # linear combinations of previous predictors)
 
-# 2. Simulation study: the various ways R^2 can increase.
-#   a) X1,X2 not correlated, both predictive of y
-
-set.seed(1234)
-eps <- rnorm(100)
-X1 <- rnorm(100, mean=2, sd=1)
-X2 <- rnorm(100, mean=-3, sd=1)
-Y <- 1 + X1 + X2 + eps
-
-makeGGScatter(X1, X2)
-makeGGScatter(X1, Y)
-makeGGScatter(X2, Y)
-
-baseModel <- lm(Y ~ X1)
-partialReg <- lm(X2 ~ X1)
-
 analyzePartialReg <- function(baseModel, partialReg) {
   partialRegResiduals <- resid(partialReg)
   baseModelResiduals <- resid(baseModel)
@@ -245,63 +230,112 @@ analyzePartialReg <- function(baseModel, partialReg) {
   cor(partialRegResiduals,baseModelResiduals)
 }
 
-analyzePartialReg(baseModel, partialReg) # cor \approx 72
-extendedModel <- lm(Y ~ X1 + X2)
-calcR2Increase(baseModel, extendedModel) # > 90% increase!
+# 2. Simulation study: the various ways R^2 can increase.
+#   a) X1,X2 not correlated, both predictive of y
 
-# 2.b) X1,X2 not correlated, only 1 predictive of y
+set.seed(1234)
+eps <- rnorm(100)
+X1 <- rnorm(100, mean=2, sd=1)
+X2 <- rnorm(100, mean=-3, sd=1)
+Y <- 1 + X1 + X2 + X2^2 + eps
 
-Y <- 1 + X1 + eps
 makeGGScatter(X1, X2)
 makeGGScatter(X1, Y)
 makeGGScatter(X2, Y)
 
 baseModel <- lm(Y ~ X1)
 partialReg <- lm(X2 ~ X1)
-analyzePartialReg(baseModel, partialReg) # cor less than 0.085
+
+analyzePartialReg(baseModel, partialReg) # cor \approx -0.93
 extendedModel <- lm(Y ~ X1 + X2)
-calcR2Increase(baseModel, extendedModel) # < 1% increase (> 0, though)
+calcR2Increase(baseModel, extendedModel) # > 53x increase!
+summary(extendedModel) # R^2 = 0.8639
+
+# ^^ X1 does a crap job predicting X2 (understandably), however
+# because of X2 contains a lot of the variability in Y a lot of what X1 can't
+# explain about X2 overlaps with what it can't explain about Y. 
+
+# Since we see that Y may vary quadratically with X2, consider doing this
+# one more time
+X3 <- X2^2
+baseModel <- extendedModel
+partialReg <- lm(X3 ~ X1 + X2)
+summary(partialReg) 
+# ^^ R^2 = 0.9265 => this captures a lot of the variability
+
+analyzePartialReg(baseModel, partialReg) # cor \approx 0.84
+# ^^ where/how X1 + X2 fails to explain Y has heavy overlap with where/how
+# it fails to explain X3. Perhaps part of the background process that generated
+# X3 has a hand in the generation of Y?
+
+extendedModel <- lm(Y ~ X1 + X2 + X3)
+calcR2Increase(baseModel, extendedModel) # < 11.5% increase
+summary(extendedModel) # R^2 = 0.9602
+
+# 2.b) X1,X2 not correlated, only 1 predictive of y
+
+Y <- 1 + X1^2 + eps
+makeGGScatter(X1, X2)
+makeGGScatter(X1, Y)
+makeGGScatter(X2, Y)
+
+baseModel <- lm(Y ~ X1)
+summary(baseModel) # R^2 = 0.9682
+
+partialReg <- lm(X2 ~ X1) # R^2 = 0.0086
+analyzePartialReg(baseModel, partialReg) # cor less than 0.082
+# ^^ residuals are very loosely correlated:
+# the phenomena underlying Y and X2 (once X1 is taken into account)
+# don't have a very strong link. Shouldn't expect an large increase in R^2
+extendedModel <- lm(Y ~ X1 + X2)
+calcR2Increase(baseModel, extendedModel) # < 0.5% increase (> 0, though)
 
 # 2.c) X1,X2 correlated, still both significant for Beta
-X2 <- X1^2
+set.seed(1234)
+X2 <- X1^2 + rnorm(100, sd=0.5)
+cor(X1, X2) # 0.9208464
 Y <- 1 + X1 + X2 + eps
 makeGGScatter(X1, X2)
 makeGGScatter(X1, Y)
 makeGGScatter(X2, Y)
 
-baseModel <- lm(Y ~ X1)
-partialReg <- lm(X2 ~ X1)
-analyzePartialReg(baseModel, partialReg) # cor \approx 0.86 !!!
+baseModel <- lm(Y ~ X1) # R^2 = 0.8414
+partialReg <- lm(X2 ~ X1) # R^2 = 0.848
+analyzePartialReg(baseModel, partialReg) # cor \approx 0.903
+# source of error seems to come from similar places
 extendedModel <- lm(Y ~ X1 + X2)
-summary(extendedModel) # all coefficients are highly significant
-calcR2Increase(baseModel, extendedModel) # < 11% increase
+summary(extendedModel) 
+# all coefficients are highly significant
+# R^2 = 0.9707 which isn't surprising since we've hit the model near dead-on
+calcR2Increase(baseModel, extendedModel) # < 16% increase
 
 # 2.d) X1,X2 correlated, jointly predictive of y, neither significant Beta
-Y <- 1 + 0.05*X1 + 0.0025*X2 + eps
-makeGGScatter(X1, X2)
-makeGGScatter(X1, Y)
-makeGGScatter(X2, Y)
+library(MASS)
+set.seed(1234)
+X <- mvrnorm(n=100,mu=c(2,-3),Sigma=matrix(c(4,1,1,9),nrow=2))
+X1 <- X[,1]; X2 <- X[,2]
+Z1 <- rnorm(100, sd=10)
+Z2 <- rnorm(100,sd=1)
+Z3 <- rexp(n=100,rate=0.5) 
 
-baseModel <- lm(Y ~ X1)
-partialReg <- lm(X2 ~ X1)
-analyzePartialReg(baseModel, partialReg) # cor \approx -0.018
-extendedModel <- lm(Y ~ X1 + X2)
-summary(extendedModel) # all coefficients are highly significant
-calcR2Increase(baseModel, extendedModel) # < 25% increase
+Y <- 1 + 0.05*abs(X1 - X2) + Z3
+makeGGScatter(X1, X2) # cor(X1, X2) = 0.776
+makeGGScatter(X1, Y) # cor(X1, Y) = 0.411
+makeGGScatter(X2, Y) # cor(X2, Y) = 0.351
 
-data(Duncan)
+# check that X1 and X2 are jointly predictive
+simData <- data.frame(X1, X2, Y, Breaks=cut(Y,breaks=6))
 
-# avPlot of Prestige ~ . - Income
-prestigeAgainstAllLessIncome <- lm(formula = prestige ~ . - income, data=Duncan)
-incomeAgainstAllLessPrestige <- lm(formula = income ~ . - prestige, data=Duncan)
-
-resY <- prestigeAgainstAllLessIncome$residuals
-resX <- incomeAgainstAllLessPrestige$residuals
-
-ggplot(data=data.frame(x=resX, y=resY), aes(x=x,y=y)) + 
-  geom_point(shape=1) + 
-  stat_smooth(method="lm", se=FALSE, color='red') +
-  labs(x="Income's regression residuals", y="Prestige's regression residuals") +
+yVsX1X2 <- ggplot(data=simData, aes(x=X1, y=X2, color=Breaks)) +
+  geom_point(size=4) +
   theme_bw()
 
-?Duncan
+show(yVsX1X2)
+
+baseModel <- lm(Y ~ X1) # R^2 = 0.2996
+partialReg <- lm(X2 ~ X1)
+analyzePartialReg(baseModel, partialReg) # cor \approx 0.0556
+extendedModel <- lm(Y ~ X1 + X2)
+summary(extendedModel) # all coefficients are significant
+# ^^ R^2 = 0.33
+calcR2Increase(baseModel, extendedModel) # < 11% increase in R^2
