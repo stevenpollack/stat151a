@@ -32,6 +32,56 @@ summary(partialReg)
 # make the avplot by hand with ggplot2
 library(ggplot2)
 
+#####
+# Multiple plot function 
+# http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot
+# objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+#####
+
 makeGGScatter <- function(X, Y, .res=FALSE) {
   axisLabels <- if (.res) {
     paste0(c(substitute(X), substitute(Y)),
@@ -66,11 +116,15 @@ extendedModel <- lm(prestige ~ income + education, data=Duncan)
 summary(extendedModel)
 
 # calculate R^2 of the two models
-extendedModelR2 <- var(extendedModel$fitted.values)/var(Duncan$prestige)
-baseModelR2 <- var(baseModel$fitted.values)/var(Duncan$prestige)
+calcR2Increase <- function(baseModel, extendedModel) {
+  extendedModelR2 <- var(extendedModel$fitted.values)/var(Duncan$prestige)
+  baseModelR2 <- var(baseModel$fitted.values)/var(Duncan$prestige)
+  
+  # find the percent increase
+  abs(baseModelR2 - extendedModelR2) / baseModelR2 
+}
 
-# find the percent increase
-abs(baseModelR2 - extendedModelR2) / baseModelR2 # approximately 14%
+calcR2Increase(baseModel, extendedModel) # approximately 14%  
 
 # look at colinearity between income and education
 cor(Duncan$income, Duncan$education) # 0.7245
@@ -80,6 +134,52 @@ with(data=Duncan, makeGGScatter(income, education, FALSE)) # seem pretty colinea
 
 coplot(prestige ~ education | income, data=Duncan, panel=panel.smooth, span=.99)
 coplot(prestige ~ income | education, data=Duncan, panel=panel.smooth, span=.99)
+# ^^ so prestige conditioning out a variable doesn't completely kill
+# predictability of the remainder of the model
+
+# Now, let's consider adding the other variable: "type".
+# First, let's do some basic EDA
+incVsType <- ggplot(data=Duncan, aes(x=type, y=income)) +
+  geom_boxplot(outlier.shape=1) + 
+  labs(x=NULL, title=NULL) +
+  theme_bw()
+
+educVsType <- ggplot(data=Duncan, aes(x=type, y=education)) +
+  geom_boxplot(outlier.shape=1) + 
+  labs(x=NULL, title=NULL) +
+  theme_bw()
+
+multiplot(incVsType, educVsType, cols = 2)
+
+# Alternatively,
+library(reshape2)
+ggplot(data=melt(data=Duncan,id.vars=c("type"),
+                 measure.vars=c("income", "education")),
+       aes(x=type, y=value, fill=variable)) +
+  geom_boxplot(outlier.shape=1) +
+  scale_fill_discrete(guide=FALSE) +
+  facet_grid(~variable, scales="free_y") +
+  theme_bw() +
+  labs(x=NULL, title=NULL, y=NULL)
+
+# so there's a clear trend between type and income (education)
+# Let's try and do the regression "type ~ income + education"
+
+partialReg2 <- lm(factor(type) ~ income + education, data=Duncan)
+
+# STOP! You guys don't know how to predict categorical output, yet.
+# Without using this residuals, let's add type to the model, anyway and see
+# how the R^2 increases.
+
+extendedModel2 <- lm(prestige ~ income + education + type, data=Duncan)
+summary(extendedModel2)
+
+# Notice: dummy cariables for type aren't very significant -- an indicator that
+# income and education are doing most of the heavy lifting.
+
+calcR2Increase(extendedModel, extendedModel2) # approximately 10%
+calcR2Increase(baseModel, extendedModel2) # approximately 25%
+
 
 extendedModel$effects
 
