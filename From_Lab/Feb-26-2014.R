@@ -92,7 +92,7 @@ makeGGScatter <- function(X, Y, .res=FALSE) {
     paste0(c(substitute(X), substitute(Y)))
   }
   
-  ggplot(data=data.frame(X=X,Y=Y), aes(y=X, x=Y)) +
+  ggplot(data=data.frame(X=X,Y=Y), aes(x=X, y=Y)) +
     geom_point(shape=1) +
     stat_smooth(method="lm", se=FALSE, color='red') +
     theme_bw() +
@@ -221,17 +221,73 @@ calcR2Increase(baseModel, extendedModel2) # about 21%
 # addition of predictors (assuming you're adding new predictors that aren't 
 # linear combinations of previous predictors)
 
+# 2. Simulation study: the various ways R^2 can increase.
+#   a) X1,X2 not correlated, both predictive of y
 
-extendedModel$effects
+set.seed(1234)
+eps <- rnorm(100)
+X1 <- rnorm(100, mean=2, sd=1)
+X2 <- rnorm(100, mean=-3, sd=1)
+Y <- 1 + X1 + X2 + eps
 
-?avPlot
+makeGGScatter(X1, X2)
+makeGGScatter(X1, Y)
+makeGGScatter(X2, Y)
 
-avPlots(lm(prestige~income+education+type, data=Duncan))
-# 
-# 1) X1,X2 not correlated, both predictive of y
-# 2) X1,X2 not correlated, only 1 predictive of y
-# 3) X1,X2 correlated, still both significant for Beta
-# 4) X1,X2 correlated, jointly predictive of y, neither significant Beta
+baseModel <- lm(Y ~ X1)
+partialReg <- lm(X2 ~ X1)
+
+analyzePartialReg <- function(baseModel, partialReg) {
+  partialRegResiduals <- resid(partialReg)
+  baseModelResiduals <- resid(baseModel)
+  avPlot <- makeGGScatter(partialRegResiduals, baseModelResiduals)
+  show(avPlot)
+  cor(partialRegResiduals,baseModelResiduals)
+}
+
+analyzePartialReg(baseModel, partialReg) # cor \approx 72
+extendedModel <- lm(Y ~ X1 + X2)
+calcR2Increase(baseModel, extendedModel) # > 90% increase!
+
+# 2.b) X1,X2 not correlated, only 1 predictive of y
+
+Y <- 1 + X1 + eps
+makeGGScatter(X1, X2)
+makeGGScatter(X1, Y)
+makeGGScatter(X2, Y)
+
+baseModel <- lm(Y ~ X1)
+partialReg <- lm(X2 ~ X1)
+analyzePartialReg(baseModel, partialReg) # cor less than 0.085
+extendedModel <- lm(Y ~ X1 + X2)
+calcR2Increase(baseModel, extendedModel) # < 1% increase (> 0, though)
+
+# 2.c) X1,X2 correlated, still both significant for Beta
+X2 <- X1^2
+Y <- 1 + X1 + X2 + eps
+makeGGScatter(X1, X2)
+makeGGScatter(X1, Y)
+makeGGScatter(X2, Y)
+
+baseModel <- lm(Y ~ X1)
+partialReg <- lm(X2 ~ X1)
+analyzePartialReg(baseModel, partialReg) # cor \approx 0.86 !!!
+extendedModel <- lm(Y ~ X1 + X2)
+summary(extendedModel) # all coefficients are highly significant
+calcR2Increase(baseModel, extendedModel) # < 11% increase
+
+# 2.d) X1,X2 correlated, jointly predictive of y, neither significant Beta
+Y <- 1 + 0.05*X1 + 0.0025*X2 + eps
+makeGGScatter(X1, X2)
+makeGGScatter(X1, Y)
+makeGGScatter(X2, Y)
+
+baseModel <- lm(Y ~ X1)
+partialReg <- lm(X2 ~ X1)
+analyzePartialReg(baseModel, partialReg) # cor \approx -0.018
+extendedModel <- lm(Y ~ X1 + X2)
+summary(extendedModel) # all coefficients are highly significant
+calcR2Increase(baseModel, extendedModel) # < 25% increase
 
 data(Duncan)
 
