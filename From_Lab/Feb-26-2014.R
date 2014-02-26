@@ -1,6 +1,8 @@
 # Februrary 26, 2014
 # Outline:
 #   1. Investigate added-variable plots (aka avPlots, partial regression plots)
+#      with real data.
+#   2. Do a simulation study to show how R^2 increases in a few cases
 
 # 1. av plots
 # What are they?
@@ -179,6 +181,45 @@ summary(extendedModel2)
 
 calcR2Increase(extendedModel, extendedModel2) # approximately 10%
 calcR2Increase(baseModel, extendedModel2) # approximately 25%
+
+# this exercise was partly to remind you the limitations of our tools.
+# now, let's do this all over, but with our base model being just "~ type".
+
+baseModel <- lm(prestige ~ type, data=Duncan)
+extendedModel <- lm(prestige ~ type + education, data=Duncan)
+
+calcR2Increase(baseModel, extendedModel) # approximately 8%
+
+# let's check out the avplot
+within(data=data.frame(), {
+  education <- resid(lm(education ~ type, data=Duncan))
+  prestige <- resid(baseModel)
+  avPlot <- makeGGScatter(education, prestige, .res=TRUE)
+  show(avPlot)
+  print(cor(education, prestige)) # about 0.491
+})
+
+partialReg2 <- lm(income ~ type + education, data=Duncan)
+summary(partialReg2) 
+
+# what does the avplot tell us?
+within(data=data.frame(), {
+  income <- resid(partialReg2)
+  prestige <- resid(extendedModel)
+  avPlot <- makeGGScatter(income, prestige, .res=TRUE)
+  show(avPlot)
+  print(cor(income, prestige)) # about 0.727
+})
+# where the model fails to explain prestige's behaviour, it also fails to
+# explain income's behaviour. => we shouldn't expect to glean too much more
+# by adding income to the model
+
+calcR2Increase(extendedModel,extendedModel2) # about 12%
+calcR2Increase(baseModel, extendedModel2) # about 21%
+
+# Don't let the numbers above fool you: R^2 will always increase with the
+# addition of predictors (assuming you're adding new predictors that aren't 
+# linear combinations of previous predictors)
 
 
 extendedModel$effects
