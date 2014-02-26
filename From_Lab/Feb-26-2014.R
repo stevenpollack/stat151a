@@ -310,32 +310,38 @@ summary(extendedModel)
 calcR2Increase(baseModel, extendedModel) # < 16% increase
 
 # 2.d) X1,X2 correlated, jointly predictive of y, neither significant Beta
-library(MASS)
 set.seed(1234)
-X <- mvrnorm(n=100,mu=c(2,-3),Sigma=matrix(c(4,1,1,9),nrow=2))
-X1 <- X[,1]; X2 <- X[,2]
-Z1 <- rnorm(100, sd=10)
-Z2 <- rnorm(100,sd=1)
-Z3 <- rexp(n=100,rate=0.5) 
 
-Y <- 1 + 0.05*abs(X1 - X2) + Z3
-makeGGScatter(X1, X2) # cor(X1, X2) = 0.776
-makeGGScatter(X1, Y) # cor(X1, Y) = 0.411
-makeGGScatter(X2, Y) # cor(X2, Y) = 0.351
+X1 <- sample(x=0:1, size=25, replace=TRUE)
+X2 <-sapply(X1, function(x) {
+  if (x==1) {
+    sample(x=0:1,size=1,prob=c(0.3,0.7))
+  } else {
+    sample(x=0:1,size=1,prob=c(0.7,0.3))
+  }
+})
+cor(X1, X2)
+Y <- 1 - X1 - 0.5*X2 + rnorm(n=length(X1), sd=2)
+
+makeGGScatter(X1, X2) # cor(X1, X2)
+makeGGScatter(X1, Y) # cor(X1, Y) 
+makeGGScatter(X2, Y) # cor(X2, Y)
 
 # check that X1 and X2 are jointly predictive
-simData <- data.frame(X1, X2, Y, Breaks=cut(Y,breaks=6))
+simData <- data.frame(X1, X2, Y, Breaks=cut(Y,breaks=4))
 
-yVsX1X2 <- ggplot(data=simData, aes(x=X1, y=X2, color=Breaks)) +
-  geom_point(size=4) +
+yVsX1X2 <- ggplot(data=simData, aes(x=X1, y=X2, color=Breaks, shape=Breaks)) +
+  geom_point(size=4, 
+             alpha=0.75,
+             position=position_jitter(width=0.05, height=0.05)) +
   theme_bw()
 
 show(yVsX1X2)
 
-baseModel <- lm(Y ~ X1) # R^2 = 0.2996
+baseModel <- lm(Y ~ X1) # R^2 = 0.01218
 partialReg <- lm(X2 ~ X1)
-analyzePartialReg(baseModel, partialReg) # cor \approx 0.0556
+analyzePartialReg(baseModel, partialReg) # cor \approx -0.0295
 extendedModel <- lm(Y ~ X1 + X2)
-summary(extendedModel) # all coefficients are significant
-# ^^ R^2 = 0.33
-calcR2Increase(baseModel, extendedModel) # < 11% increase in R^2
+summary(extendedModel) # all coefficients are insignificant
+# ^^ R^2 = 0.01304
+calcR2Increase(baseModel, extendedModel) # < 7.1% increase in R^2
