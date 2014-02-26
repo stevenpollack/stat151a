@@ -345,3 +345,14 @@ extendedModel <- lm(Y ~ X1 + X2)
 summary(extendedModel) # all coefficients are insignificant
 # ^^ R^2 = 0.01304
 calcR2Increase(baseModel, extendedModel) # < 7.1% increase in R^2
+
+# reconsider using LM with X1 and X2 as factors
+# ... doesn't work.
+Z1 <- as.factor(X1); Z2 <- as.factor(X2)
+baseModel <- lm(Y ~ Z1) # R^2 = 0.01218
+partialReg <- lm(X2 ~ Z1)
+analyzePartialReg(baseModel, partialReg) # cor \approx -0.0295
+extendedModel <- lm(Y ~ Z1 + Z2)
+summary(extendedModel) # all coefficients are insignificant
+# ^^ R^2 = 0.01304
+calcR2Increase(baseModel, extendedModel) # < 7.1% increase in R^2
