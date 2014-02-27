@@ -13,15 +13,11 @@
 # how much variability resides in Z that is not explained by X1 + X2. If the
 # residual vectors from these two vectors "have nothing to do with each other"
 # Then it would stand to reason adding the extra variability from Z into the
-# model "X1 + X2 + Z" should do a better job capturing the variability in Y.
+# model "X1 + X2 + Z" shouldn't really do a better job capturing the
+# variability in Y.
 # If the residuals are strongly correlated, then introducing Z to the model
-# won't help (much) in capturing the (previously) left over variability since
-# X1 + X2 explain Y and Z similarly, so we aren't introducing (a lot of) new
-# information. 
-
-# To get a feel for this we'll use Duncan's occupation data and consider the
-# base model of "~ education" in modeling prestige. In particular, we'll check
-# out the affect of adding income to the model.
+# can give us a better chance at modeling the leftover variability in Y through
+# Z. 
 
 library(car) # contains Duncan's occupation data, and avPlots
 data(Duncan)
