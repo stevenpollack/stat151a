@@ -1,6 +1,6 @@
 \documentclass[10pt,titlepage]{article}
 
-\usepackage{../HW_Solutions/mcgill}
+\usepackage{../HW_solutions/mcgill}
 
 \newcommand{\Solution}{\paragraph{\textit{Solution.}}}
 \newcommand{\y}{\mathbf{y}}
@@ -10,6 +10,7 @@
 \newcommand{\zero}{\mathbf{0}}
 \renewcommand{\I}{\mathbf{I}}
 \renewcommand{\N}{\mathcal{N}}
+\renewcommand{\E}{\mathbb{E}}
 
 % \renewcommand{\O}{\mathcal{O}}
 % \renewcommand{\Q}{\mathcal{Q}}
@@ -38,6 +39,89 @@ opts_chunk$set(comment="#",
   
   knit_hooks$set(source=listing, output=listing)
 @
-
-
+\paragraph{\#1.}
+\begin{enumerate}
+  \item[(a)] Recall that $\hat{\beta} = (X'X)^{-1}X'Y$, so if the model
+  $Y = X\beta + \eps$ is true, then
+  \begin{align*}
+  \E(\hat{\beta}\given{X}) &= \E((X'X)^{-1}X'Y \given{X}) \\
+  &= (X'X)^{-1}X'\E(Y\given{X}) \\
+  &= (X'X)^{-1}X'\E(X\beta + \eps \given{X}) \\
+  &= (X'X)^{-1}X'X\beta + (X'X)^{-1}X'\E(\eps \given{X}) \\
+  &= \beta + (X'X)^{-1}X'\E(\eps \given{X})
+  \end{align*}
+  Hence, $\hat{\beta}$ is unbiased, precisely if $\E(\eps\given{X}) = 0$ and
+  this property has nothing to do with whether the errors are dependent or not.
+  \item[(b)] Notice that if I define $\X = (X_1 | X_2 | \cdots | X_p)$, where
+  $\X$ is a design matrix \textit{without} a column of ones, then I can still
+  go through the same work, defining 
+  \[
+  S(\beta)
+  = \SUM{i}{1}{n}(y^{(i)} - \beta_1 x_{1}^{(i)} - \cdots - \beta_p x_{p}^{(i)})^2
+  = \norm{\y - \X\beta}^{2}
+  \]
+  and still, we'd arrive at
+  \[
+  \nabla S(\beta) = 2\X'\X\beta - 2 \X'\y \in \R^{p}
+  \]
+  Hence, if $\hat{\beta} \in \R^{p}$ is such that $\nabla S(\hat{\beta}) = 0$,
+  then
+  \[
+  \X'\underbrace{\left(\X\hat{\beta}-\y\right)}_{\text{residuals}} 
+  = \X' r = 0
+  \]
+  However, while this says that the inner-product of the residuals and any
+  column in $\X$ is zero, this (unlike before) no longer guarantees that
+  \[
+  0 = \SUM{i}{1}{n} r_i = \one_{n}' r
+  \]
+  holds, since $\one_{n}$ is no longer a column in our design matrix.
+  \item[(c)] Leverage is a subjective qualification, and needs to be determined
+  within the context of a particular dataset. So while high leverage points
+  change the fit of the model, they do not do so \textit{independently} of the
+  rest of the data. The change the fit of the model that would have been produced
+  had we, otherwise, not used them in our estimation procedure.
+\end{enumerate}
+\renewcommand{\H}{\ensuremath{\mathbf{H}}}
+\paragraph{\#2.}
+\begin{enumerate}
+  \item[(a)] So, assuming now that $\X = (\one_{n}|X_1|\cdots|X_p)$ is an
+  $n \times (p+1)$ design matrix, we have that
+  \[
+  \H \stackrel{\Delta}{=} 
+  \underbrace{\X}_{A}\underbrace{(\X'\X)^{-1}}_{B}\underbrace{\X'}_{C}
+  \]
+  is an $n \times n$ idempotent and symmetric matrix. More pertinently, we can
+  use the cyclical properties of the $\tr$ operator to write
+  \[
+  \tr(\H) = \tr(ABC) = \tr(BCA) = \tr\left((\X'\X)^{-1}\X'\X\right)
+  =\tr(I_{p+1}) = p+1
+  \]
+  \item[(b)] This implies that large leverage values have fitted values that
+  closely approximate observed values (see page 7 in handout \#4.)
+\end{enumerate}
+\paragraph{\#3.}
+\begin{enumerate}
+  \item[(a)]
+  \item[(b)]
+  \item[(c)]
+\end{enumerate}
+\paragraph{\#4.}
+\begin{enumerate}
+  \item[(a)] With the exception of the outlier around $(4,16)$, the data seems
+  to follow a strongly negative trend. I.e., family history of disease strongly
+  decreases with healthier eating habits. Now, she wants to gauge how these
+  two factors effect the impact of a particular preventative treatment. However,
+  if the eating habits don't change, then people with good habits will most 
+  likely not exhibit any issues, so we'll only really be able to gauge how
+  effective this treatment was at offsetting the effect of family history. That
+  is, only inside the stratum of people with bad family history and poor
+  eating habits, will we be able to conclude any effectiveness. Even then,
+  concluding effectiveness in this stratum isn't enough to say the treatment 
+  is generally effective in the population.
+  \item[(b)] I'd recommend she make an effort to recruit people with good
+  eating habits, but a bad family history. As the scatterplot indicates,
+  these people are high-leverage points, and can give us some insight into
+  how well the treatment works as a measure against family history.
+\end{enumerate}
 \end{document}
