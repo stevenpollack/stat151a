@@ -103,6 +103,20 @@ modelStatsExtrema
 # not surprisingly, R^2 and RSS both imply full models.
 # BIC says take a 5 variable model.
 
+modelStats
+# Check out models 69 and 70, and 41
+colnames(df3[, leapsSummary$which[69, ]])
+colnames(df3[, leapsSummary$which[70, ]])
+
+# ^^ pretty much same models, except one considers Louisa instead of Buckingham
+
+colnames(df3[, leapsSummary$which[41, ]])
+
+# heavy overlap with the models above.
+
+# do LASSO and compare models.
+# do RIDGE and compare models.
+# do step-wise regression 
 
 
 ggplot() + geom_point(data=modelStatsExtrema, aes(x=min,y=max)) +  geom_hline(data=modelStatsExtrema, aes(x=min), color='blue') +
