@@ -1,0 +1,83 @@
+\documentclass[10pt,titlepage]{article}
+
+\usepackage{../mcgill}
+
+\newcommand{\Solution}{\paragraph{\textit{Solution.}}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\x}{\mathbf{x}}
+\renewcommand{\b}{\mathbf{b}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\zero}{\mathbf{0}}
+\renewcommand{\I}{\mathbf{I}}
+\renewcommand{\N}{\mathcal{N}}
+
+% \renewcommand{\O}{\mathcal{O}}
+% \renewcommand{\Q}{\mathcal{Q}}
+% \renewcommand{\H}{\mathcal{H}}
+
+
+\begin{document}
+<<globalParameters,echo=FALSE,cache=FALSE>>=
+set.seed(1234)
+opts_chunk$set(comment="#",
+               tidy=FALSE,
+               warning=FALSE,
+               message=FALSE,
+               highlight=TRUE,
+               echo=TRUE,
+               cache=TRUE)
+@
+
+%%%%% knitr code to make sure things stay inside listings box:
+<<stayInside,echo=FALSE>>=
+  options(width=60)
+  listing <- function(x, options) {
+     paste("\\begin{lstlisting}[basicstyle=\\ttfamily,breaklines=true]\n",
+           x,"\\end{lstlisting}\n", sep = "")
+  }
+  
+  knit_hooks$set(source=listing, output=listing)
+@
+
+\paragraph{\#1. -- Exercise 12.2} Nonconstant variance and specification error:
+Generate 100 observations accoridng to the following model: 
+\[
+Y = 10 + (1 \times X) + (1 \times D) + (2 \times X \times D) + \epsilon
+\]
+where $\epsilon \sim N(0,10^2)$; the values of $X$ are $1,2,\ldots,50, 1,2,
+\ldots, 50$; the first 50 values of $D$ are 0; and the last 50 values of $D$ are
+1. Then regress $Y$ on $X$ alone (i.e., omitting $D$ and $XD$), $Y=A + BX + E$.
+Plot the residuals, $E$ from this regression against the fitted values $\hat{Y}$.
+Is the variance of the residuals constant? How do you account for the pattern in
+the plot?
+
+\paragraph{\#2. -- Exercise 12.6} Experimenting with component-plus-residual 
+plots; Generate random samples of 100 obserations according to each of the
+following schemes. In each case, construct the component-plus-residual plots for
+$X_1$ and $X_2$. do these plots accurately capture the partial replationships
+between $Y$ and each of $X_1$ and $X_2$? Whenever they appear, $\epsilon$ and
+$\delta$ are $N(0,1)$ and independent of each other and of the other variables.
+
+\begin{enumerate}
+  \item[(a)] Independent $X$s and a linear regression: $X_1$ and $X_2$ independent
+  and uniformly distributed on the interval $[0,1]$; $Y= X_1 + X_2 + 0.1\epsilon$.
+  \item[(b)] Linearly related $X$s and a linear regression: $X_1$ uniformly
+  distributed on the interval $[0,1]$; $X_2 = X_1 + 0.1\delta$; 
+  $Y= X_1 + X_2 + 0.1\epsilon$. 
+  \item[(c)] Independent $X$s and a nonlinear regression on one $X$: $X_1$ and
+  $X_2$ independent and uniformly distributed on the interval $[0,1]$; 
+  $Y=2(X_1 - 0.5)^2 + x_2 + 0.1\epsilon$. 
+  \item[(d)] Linearly related $X$s and a nonlinear regression on one $X$: $X_1$
+  uniformly distributed on $[0,1]$; $X_2 = X_1 + 0.1\delta$; 
+  $Y = 2(X_1 - 0.5)^2 + x_2 + 0.1\epsilon$. 
+  (Note the ``leakage'' here from $X_1$ to $X_2$.)
+  \item[(e)] Nonlinearly related $X$s and a linear regression: $X_1$ uniformly
+  distributed on the interva $[0,1]$; $X_2 = \ord{X_1-0.5}$; 
+  $Y=X_1 + X_2 + 0.02\epsilon$.
+  \item[(f)] Nonlinearly related $X$s and a linear regression on one $X$; $X_1$
+  uniformly distributed on the interval $[0,1]$; $X_2 = \ord{X_1 - 0.5}$; 
+  $Y= 2(X_1 - 0.5)^2 + X_2 + 0.02\epsilon$. (Note how strong a nonlinear 
+  relationship between the $X$s and how small an error variance in the regression
+  are required for the effects in this example to be noticeable.)
+\end{enumerate}
+\end{document}
