@@ -20,6 +20,12 @@ df <- df[!apply(df, 1, function(x) any(is.na(x)) ), ] # 403 -> 366 observations
 
 summary(df) # no more row's with NA's. 
 
+set.seed(1234)
+holdoutIndices <- sample(seq.int(nrow(df)), size=72, replace=FALSE)
+holdoutData <- df[holdoutIndices, ]
+
+df <- df[-holdoutIndices, ]
+
 # normally we'd do some EDA, but for the sake of time, let's just explore the
 # relationship between chol and the other variables
 library(ggplot2)
@@ -71,6 +77,7 @@ df3 <- lapply(df, function(col) {
 })
 
 df3 <- as.data.frame(df3)
+
 leaps(x=df3[, colnames(df3) != "chol"], y=df3[, "chol"], nbest=3) # ERROR again
 leapsOutput <- regsubsets(chol ~ ., data=df3, nbest=10, nvmax=19)
 leapsSummary <- summary(leapsOutput)
@@ -105,20 +112,100 @@ modelStatsExtrema
 
 modelStats
 # Check out models 69 and 70, and 41
-colnames(df3[, leapsSummary$which[69, ]])
-colnames(df3[, leapsSummary$which[70, ]])
+colnames(df3[, leapsSummary$which[69, ]]) # leapsSummary$adjr2[69] == 0.1732
+colnames(df3[, leapsSummary$which[70, ]]) # leapsSummary$cp[70] == 2.057817
 
-# ^^ pretty much same models, except one considers Louisa instead of Buckingham
-
+# BIC chosen model:
 colnames(df3[, leapsSummary$which[41, ]])
 
-# heavy overlap with the models above.
-
-# do LASSO and compare models.
-# do RIDGE and compare models.
-# do step-wise regression 
+# ^ heavy overlap with the models above.
 
 
-ggplot() + geom_point(data=modelStatsExtrema, aes(x=min,y=max)) +  geom_hline(data=modelStatsExtrema, aes(x=min), color='blue') +
-  facet_wrap(~variable, scales="free_y")
+# build models
+m69 <- lm(chol ~ . , data=df3[, leapsSummary$which[69, ]]) 
+m70 <- lm(chol ~ . , data=df3[, leapsSummary$which[79, ]]) # <- has lower adjR^2
+
+
+# these models were built using an exhaustive search. Let's see what kind of
+# full model would have been made had we use LASSO, instead.
+# see: http://www.stanford.edu/~hastie/glmnet/glmnet_alpha.html
+library(glmnet)
+library(doParallel)
+registerDoParallel(cores=detectCores())
+
+# note that alpha=1 <=> LASSO and alpha=0 <=> Ridge inside glmnet
+cvLasso <- cv.glmnet(type.measure="mse", parallel=TRUE, nfolds=10, alpha=1,
+                     x=as.matrix(df3[, colnames(df3) != "chol"]), y=df3[, "chol"])
+
+plot(cvLasso)
+colnames(df3)[as.logical(coef(cvLasso, s="lambda.min"))] # 10 predictors
+colnames(df3)[as.logical(coef(cvLasso, s="lambda.1se"))] # 2 predictors
+minLassoMSE <- cvLasso$cvm[which(cvLasso$lambda == cvLasso$lambda.min)] #1679.5
+
+# build the models
+lassoPreds <- predict(cvLasso, newx=as.matrix(df3[,-1]),
+                      s=c(cvLasso$lambda.min, cvLasso$lambda.1se))
+
+calcAdjR2 <- function(y_M, p) {
+  y <- df3$chol
+  n <- length(y)
+  sigma2_hat <- var(y)
+  1 - sum((y_M - y)^2) / ( (n - p - 1) * sigma2_hat )
+}
+
+calcAdjR2(y_M=lassoPreds[,1], p=10) # 0.1467
+calcAdjR2(y_M=lassoPreds[,2], p=2) # 0.0467
+
+# now consider ridge:
+
+cvRidge <- cv.glmnet(type.measure="mse", parallel=TRUE, nfolds=10, alpha=0,
+                     x=as.matrix(df3[, colnames(df3) != "chol"]), y=df3[, "chol"])
+
+plot(cvRidge) # note that this does little model selection
+coef(cvRidge, s="lambda.min")
+coef(cvRidge, s="lambda.1se")
+minRidgeMSE <- cvRidge$cvm[which(cvRidge$lambda == cvRidge$lambda.min)] #1664.5
+
+ridgePreds <- predict(cvRidge, newx=as.matrix(df3[,-1]),
+                      s=c(cvRidge$lambda.min, cvRidge$lambda.1se))
+
+calcAdjR2(y_M=ridgePreds[,1], p=18) # 0.118
+calcAdjR2(y_M=ridgePreds[,2], p=18) # -0.065
+
+## test these models on the holdout data
+
+holdoutData <-lapply(holdoutData, function(col) {
+  if (inherits(col, "factor")) {
+    unrollFactorVar(col)
+  } else {
+    col
+  }
+}) 
+holdoutData <- as.data.frame(holdoutData)
+
+lassoPreds <- predict(cvLasso, newx=as.matrix(holdoutData[,-1]),
+                      s=c(cvLasso$lambda.min, cvLasso$lambda.1se))
+
+
+ridgePreds <- predict(cvRidge, newx=as.matrix(holdoutData[,-1]),
+                      s=c(cvRidge$lambda.min, cvRidge$lambda.1se))
+
+MSE_hat <- within(data.frame(lasso.Min=0), {
+  lasso.Min <- mean( (lassoPreds[,1] - holdoutData$chol)^2 )
+  lasso.1se <-  mean( (lassoPreds[,2] - holdoutData$chol)^2 )
+  ridge.Min <- mean( (ridgePreds[,1] - holdoutData$chol)^2 )
+  ridge.1se <-  mean( (ridgePreds[,2] - holdoutData$chol)^2 )
+  m69 <- mean( (predict(m69, newdata=holdoutData) - holdoutData$chol)^2 )
+  m70 <- mean( (predict(m70, newdata=holdoutData) - holdoutData$chol)^2 )
+})
+
+msePlot <- ggplot(data=melt(MSE_hat), aes(x=variable, y=value, size=1/value, fill=value)) +
+  geom_point(shape=21) +
+  theme_bw() +
+  labs(x="model", y="MSE", title=NULL) +
+  ylim(c(1500, 1700)) +
+  scale_fill_gradient("MSE", high="blue", low="red", limits=c(1590,1630))
+
+msePlot
+
 detach(diabetes)
