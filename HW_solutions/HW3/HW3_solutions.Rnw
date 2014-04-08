@@ -24,8 +24,14 @@ opts_chunk$set(comment="#",
                warning=FALSE,
                message=FALSE,
                highlight=TRUE,
-               echo=TRUE,
-               cache=TRUE)
+               echo=FALSE,
+               cache=TRUE,
+               fig.align='center',
+               fig.pos="ht",
+               dev='pdf',
+               fig.show='hold',
+               fig.keep='all',
+               out.width="0.49\\textwidth")
 @
 
 %%%%% knitr code to make sure things stay inside listings box:
@@ -38,7 +44,10 @@ opts_chunk$set(comment="#",
   
   knit_hooks$set(source=listing, output=listing)
 @
-
+<<loadLibraries, cache=FALSE, results='hide'>>=
+library(ggplot2)
+library(reshape2)
+@
 \paragraph{\#1. -- Exercise 12.2} Nonconstant variance and specification error:
 Generate 100 observations accoridng to the following model: 
 \[
@@ -51,6 +60,50 @@ Plot the residuals, $E$ from this regression against the fitted values $\hat{Y}$
 Is the variance of the residuals constant? How do you account for the pattern in
 the plot?
 
+<<q1>>=
+X <- rep.int(1:50, 2)
+D <- c(rep.int(0,50), rep.int(1,50))
+eps <- rnorm(n=100, mean=0, sd=10)
+Y <- 10 + X + D + 2 * X * D + eps
+
+lmObj <- lm(Y ~ X)
+lmObj2 <- lm(Y[1:50] ~ X[1:50])
+lmObj3 <- lm(Y[51:100] ~ X[51:100])
+@
+\Solution
+The plot of $E$ against $\hat{Y}$ is in figure \ref{fig:q1plot}. There are two
+``streams'' of residuals, and their distance spreads as we move from left to
+right. This indicates that the variance of the residuals is not constant.
+The pattern in the plot comes from the fact that $D$ is playing the role of a
+switch and that (conditional on $D$) $Y$ is one of two different lines. See 
+figure \ref{fig:q1plots2}.
+<<q1plot, dependson=c("q1"), cache=FALSE, fig.cap="Residuals versus Fitted Values plot for exercise 12.2.">>=
+ggplot(data=data.frame(D=D, Yhat=lmObj$fitted.values, E=lmObj$residuals)) +
+  geom_point(aes(y=E, x=Yhat, color=as.factor(D)), shape=1) +
+  labs(x=expression(hat(Y)), y=expression(E), title=NULL) +
+  scale_color_discrete("D") +
+  theme_bw()
+@
+<<q1plots2, dependson=c("q1"), cache=FALSE, fig.cap="In the left plot: $Y$ versus $X$ with separate linear regressions run for the cases when $D=0,1$. In the right plot: the residuals of the colored least-squares fits in the left plot. Note that these plots do not indicate anything abnormal with the variance of the residuals.">>=
+df1 <- rbind(data.frame(D=0, Yhat=lmObj2$fitted.values, E=lmObj2$residuals),
+             data.frame(D=1, Yhat=lmObj3$fitted.values, E=lmObj3$residuals))
+
+ggplot(data=data.frame(D=D, X=X, Y=Y), aes(x=X, y=Y)) +
+  geom_point(aes(color=as.factor(D)), shape=1) +
+  stat_smooth(method="lm", se=FALSE, color='black') + 
+  stat_smooth(aes(color=as.factor(D)), method="lm", se=FALSE) +
+  scale_color_discrete("D") +
+  labs(x=expression(X), y=expression(Y),
+       title="Y against X with coloring conditional on D.") +
+  theme_bw()
+
+ggplot(data=df1, aes(color=as.factor(D), x=Yhat, y=E)) +
+  geom_point(shape=1) +
+  labs(x=expression(hat(Y)), y=expression(E),
+       title="Residuals versus Fitted Values for conditional linear regression.") +
+  scale_color_discrete("D") +
+  theme_bw()
+@
 \paragraph{\#2. -- Exercise 12.6} Experimenting with component-plus-residual 
 plots; Generate random samples of 100 obserations according to each of the
 following schemes. In each case, construct the component-plus-residual plots for
@@ -59,25 +112,123 @@ between $Y$ and each of $X_1$ and $X_2$? Whenever they appear, $\epsilon$ and
 $\delta$ are $N(0,1)$ and independent of each other and of the other variables.
 
 \begin{enumerate}
-  \item[(a)] Independent $X$s and a linear regression: $X_1$ and $X_2$ independent
-  and uniformly distributed on the interval $[0,1]$; $Y= X_1 + X_2 + 0.1\epsilon$.
+  \item[(a)] Independent $X$s and a linear regression: $X_1$ and $X_2$
+  independent and uniformly distributed on the interval $[0,1]$;
+  $Y= X_1 + X_2 + 0.1\epsilon$.
+  \Solution 
+  The CPR Plots are in figure \ref{fig:q2a}. In this situation, the plots
+  properly indicate that once you put the components back into the residuals, 
+  the left-over variation is linear in the component.
+  <<q2>>=
+  buildCPRPlots <- function(lmObj) {
+    data <- lmObj$model[,-1]
+    coefs <- coefficients(lmObj)[-1]
+    resids <- residuals(lmObj)
+    plots <- lapply(seq.int(ncol(data)), function(j) {
+      X <- data[, j]
+      Y <- resids + coefs[j] * X
+      df <- data.frame(Y=Y, X=X)
+      plot <- ggplot(data=df, aes(x=X, y=Y)) +
+        geom_point(shape=1) +
+        stat_smooth(method="loess", se=FALSE, lty=2) +
+        stat_smooth(method="lm", se=FALSE) +
+        theme_bw() +
+        labs(y=paste0(names(coefs)[j], "'s Component + Residual"),
+             x=names(coefs)[j],
+             title="Component-plus-residual plot")
+      return(plot)
+    })
+
+    lapply(plots, function(plot) show(plot))
+  }
+  @
+  <<q2a, cache=FALSE, out.width="0.49\\textwidth", fig.cap="Component-plus-residual plots for exercise 12.6.a.">>=
+  X1 <- runif(n=100, min=0, max=1)
+  X2 <- runif(n=100, min=0, max=1)
+  Y <- X1 + X2 + 0.1*rnorm(n=100)
+  lmObj <- lm(Y ~ X1 + X2)
+  tmp <- buildCPRPlots(lmObj)
+  @
   \item[(b)] Linearly related $X$s and a linear regression: $X_1$ uniformly
   distributed on the interval $[0,1]$; $X_2 = X_1 + 0.1\delta$; 
   $Y= X_1 + X_2 + 0.1\epsilon$. 
+  \Solution
+  See the figures in (\ref{fig:q2b}). Both trend lines are very nearly 
+  equal to $y=x$ and so both indicate that we should be putting each component
+  back into the model, untransformed.
+    <<q2b, cache=FALSE, out.width="0.49\\textwidth", fig.cap="Component-plus-residual plots for exercise 12.6.b.">>=
+  X1 <- runif(n=100, min=0, max=1)
+  X2 <- X1 + 0.1*rnorm(n=100)
+  Y <- X1 + X2 + 0.1*rnorm(n=100)
+  lmObj <- lm(Y ~ X1 + X2)
+  tmp <- buildCPRPlots(lmObj)
+  @
   \item[(c)] Independent $X$s and a nonlinear regression on one $X$: $X_1$ and
   $X_2$ independent and uniformly distributed on the interval $[0,1]$; 
-  $Y=2(X_1 - 0.5)^2 + x_2 + 0.1\epsilon$. 
+  $Y=2(X_1 - 0.5)^2 + X_2 + 0.1\epsilon$.
+  \Solution
+  The CPR Plot for $X_1$ in figure \ref{fig:q2c} properly reflects the quadratic
+  nature of $X_1$ in the formula for $Y$. However, the CPR Plot for $X_2$ is a 
+  bit confusing: at first blush the LOESS fit hints that maybe a monotone
+  transformation of $X_2$ should be a part of the model (perhaps $X_2^3$). 
+  However, the least-squares fit is nearly $y=x$, which would indicate that
+  we may be fine just putting $X_2$ (untransformed) back into the model.
+  <<q2c, cache=FALSE, out.width="0.49\\textwidth", fig.cap="Component-plus-residual plots for exercise 12.6.c.">>=
+  X1 <- runif(n=100, min=0, max=1)
+  X2 <- runif(n=100, min=0, max=1)
+  Y <- 2*(X1 - 0.5)^2 + X2 + 0.1*rnorm(n=100)
+  lmObj <- lm(Y ~ X1 + X2)
+  tmp <- buildCPRPlots(lmObj)
+  @
   \item[(d)] Linearly related $X$s and a nonlinear regression on one $X$: $X_1$
   uniformly distributed on $[0,1]$; $X_2 = X_1 + 0.1\delta$; 
   $Y = 2(X_1 - 0.5)^2 + x_2 + 0.1\epsilon$. 
   (Note the ``leakage'' here from $X_1$ to $X_2$.)
+  \Solution
+  Here is where things get interesting. The left CPR Plot in figure 
+  \ref{fig:q2d} properly captures the quadratic role of $X_1$ in $Y$, 
+  \textit{and} the LOESS fit in the right CPR Plot heavily suggests a
+  transformation of $X_2$ (not necessarily monotone).
+  <<q2d, cache=FALSE, out.width="0.49\\textwidth", fig.cap="Component-plus-residual plots for exercise 12.6.d.">>=
+  X1 <- runif(n=100, min=0, max=1)
+  X2 <- X1 + 0.1*rnorm(n=100)
+  Y <- 2*(X1 - 0.5)^2 + X2 + 0.1*rnorm(n=100)
+  lmObj <- lm(Y ~ X1 + X2)
+  tmp <- buildCPRPlots(lmObj)
+  @
   \item[(e)] Nonlinearly related $X$s and a linear regression: $X_1$ uniformly
-  distributed on the interva $[0,1]$; $X_2 = \ord{X_1-0.5}$; 
+  distributed on the interval $[0,1]$; $X_2 = \ord{X_1-0.5}$; 
   $Y=X_1 + X_2 + 0.02\epsilon$.
+  \Solution
+  Like in parts a and b, the plots in figure \ref{fig:q2e} don't reveal much
+  beyond the obvious: $Y$ has a linear relationship with both $X_1$ and $X_2$,
+  inspite of a non-linear relationship between $X_1$ and $X_2$. 
+  <<q2e, cache=FALSE, out.width="0.49\\textwidth", fig.cap="Component-plus-residual plots for exercise 12.6.e.">>=
+  X1 <- runif(n=100, min=0, max=1)
+  X2 <- abs(X1 - 0.5)
+  Y <- X1 + X2 + 0.02*rnorm(n=100)
+  lmObj <- lm(Y ~ X1 + X2)
+  tmp <- buildCPRPlots(lmObj)
+  @
   \item[(f)] Nonlinearly related $X$s and a linear regression on one $X$; $X_1$
   uniformly distributed on the interval $[0,1]$; $X_2 = \ord{X_1 - 0.5}$; 
   $Y= 2(X_1 - 0.5)^2 + X_2 + 0.02\epsilon$. (Note how strong a nonlinear 
-  relationship between the $X$s and how small an error variance in the regression
-  are required for the effects in this example to be noticeable.)
+  relationship between the $X$s and how small an error variance in the
+  regression are required for the effects in this example to be noticeable.)
+  <<q2f, cache=FALSE, fig.cap="Component-plus-residual plots for exercise 12.6.f.">>=
+  X1 <- runif(n=100, min=0, max=1)
+  X2 <- abs(X1 - 0.5)
+  Y <- 2*(X1 - 0.5)^2 + X2 + 0.02*rnorm(n=100)
+  lmObj <- lm(Y ~ X1 + X2)
+  tmp <- buildCPRPlots(lmObj)
+  @
+  \Solution
+  Finally, the plots in figure \ref{fig:q2f} are the most interesting yet.
+  The "symmetry" about $X_1 = 0.5$ in the left CPR Plot indicates that the
+  non-linearity we're dealing with may need more experimentation that just
+  hitting $X_1$ with a monotone transformation. Similarly, the right CPR Plot
+  would have us believe that $X_2$ should be squared up, should we choose to
+  replace it back in the model.
+\paragraph{\#3 -- Ants}
 \end{enumerate}
 \end{document}
