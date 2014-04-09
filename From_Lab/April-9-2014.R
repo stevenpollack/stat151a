@@ -79,10 +79,10 @@ df3 <- lapply(df, function(col) {
 df3 <- as.data.frame(df3)
 
 leaps(x=df3[, colnames(df3) != "chol"], y=df3[, "chol"], nbest=3) # ERROR again
-leapsOutput <- regsubsets(chol ~ ., data=df3, nbest=10, nvmax=19)
+leapsOutput <- regsubsets(chol ~ 0 + ., data=df3, nbest=10, nvmax=19)
 leapsSummary <- summary(leapsOutput)
 
-modelSize <- as.vector(sapply(seq.int(15), function(i) rep.int(i, 10)))
+modelSize <- as.vector(sapply(seq.int(14), function(i) rep.int(i, 10)))
 modelStats <- cbind(modelSize=modelSize, as.data.frame(leapsSummary[2:6]))
 
 modelStatsExtrema <- as.data.frame(lapply(modelStats[-1],
@@ -113,7 +113,7 @@ modelStatsExtrema
 modelStats
 # Check out models 69 and 70, and 41
 colnames(df3[, leapsSummary$which[69, ]]) # leapsSummary$adjr2[69] == 0.1732
-colnames(df3[, leapsSummary$which[70, ]]) # leapsSummary$cp[70] == 2.057817
+colnames(df3[, leapsSummary$which[51, ]]) # leapsSummary$cp[70] == 2.057817
 
 # BIC chosen model:
 colnames(df3[, leapsSummary$which[41, ]])
@@ -122,8 +122,8 @@ colnames(df3[, leapsSummary$which[41, ]])
 
 
 # build models
-m69 <- lm(chol ~ . , data=df3[, leapsSummary$which[69, ]]) 
-m70 <- lm(chol ~ . , data=df3[, leapsSummary$which[79, ]]) # <- has lower adjR^2
+m69 <- lm(chol ~ 0 + . , data=df3[, leapsSummary$which[51, ]]) 
+m70 <- lm(chol ~ 0 + . , data=df3[, leapsSummary$which[52, ]]) # <- has lower adjR^2
 
 
 # these models were built using an exhaustive search. Let's see what kind of
@@ -140,7 +140,7 @@ cvLasso <- cv.glmnet(type.measure="mse", parallel=TRUE, nfolds=10, alpha=1,
 plot(cvLasso)
 colnames(df3)[as.logical(coef(cvLasso, s="lambda.min"))] # 10 predictors
 colnames(df3)[as.logical(coef(cvLasso, s="lambda.1se"))] # 2 predictors
-minLassoMSE <- cvLasso$cvm[which(cvLasso$lambda == cvLasso$lambda.min)] #1679.5
+minLassoMSE <- cvLasso$cvm[which(cvLasso$lambda == cvLasso$lambda.min)] #1747
 
 # build the models
 lassoPreds <- predict(cvLasso, newx=as.matrix(df3[,-1]),
@@ -195,16 +195,15 @@ MSE_hat <- within(data.frame(lasso.Min=0), {
   lasso.1se <-  mean( (lassoPreds[,2] - holdoutData$chol)^2 )
   ridge.Min <- mean( (ridgePreds[,1] - holdoutData$chol)^2 )
   ridge.1se <-  mean( (ridgePreds[,2] - holdoutData$chol)^2 )
-  m69 <- mean( (predict(m69, newdata=holdoutData) - holdoutData$chol)^2 )
-  m70 <- mean( (predict(m70, newdata=holdoutData) - holdoutData$chol)^2 )
+#   m69 <- mean( (predict(m69, newdata=holdoutData) - holdoutData$chol)^2 )
+#   m70 <- mean( (predict(m70, newdata=holdoutData) - holdoutData$chol)^2 )
 })
 
 msePlot <- ggplot(data=melt(MSE_hat), aes(x=variable, y=value, size=1/value, fill=value)) +
   geom_point(shape=21) +
   theme_bw() +
   labs(x="model", y="MSE", title=NULL) +
-  ylim(c(1500, 1700)) +
-  scale_fill_gradient("MSE", high="blue", low="red", limits=c(1590,1630))
+  scale_fill_gradient("MSE", high="blue", low="red")
 
 msePlot
 
