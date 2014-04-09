@@ -1,0 +1,97 @@
+\documentclass[10pt,titlepage]{article}
+
+\usepackage{../mcgill}
+
+\newcommand{\Solution}{\paragraph{\textit{Solution.}}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\x}{\mathbf{x}}
+\renewcommand{\b}{\mathbf{b}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\zero}{\mathbf{0}}
+\renewcommand{\I}{\mathbf{I}}
+\renewcommand{\N}{\mathcal{N}}
+
+% \renewcommand{\O}{\mathcal{O}}
+% \renewcommand{\Q}{\mathcal{Q}}
+% \renewcommand{\H}{\mathcal{H}}
+
+
+\begin{document}
+<<globalParameters,echo=FALSE,cache=FALSE>>=
+set.seed(1234)
+opts_chunk$set(comment="#",
+               tidy=FALSE,
+               warning=FALSE,
+               message=FALSE,
+               highlight=TRUE,
+               echo=FALSE,
+               cache=TRUE,
+               fig.align='center',
+               fig.pos="ht",
+               dev='pdf',
+               fig.show='hold',
+               fig.keep='all',
+               out.width="0.49\\textwidth")
+@
+
+%%%%% knitr code to make sure things stay inside listings box:
+<<stayInside,echo=FALSE>>=
+  options(width=60)
+  listing <- function(x, options) {
+     paste("\\begin{lstlisting}[basicstyle=\\ttfamily,breaklines=true]\n",
+           x,"\\end{lstlisting}\n", sep = "")
+  }
+  
+  knit_hooks$set(source=listing, output=listing)
+@
+
+<<loadLibraries, cache=FALSE, results='hide'>>=
+library(ggplot2)
+library(reshape2)
+library(xtable)
+@
+\paragraph{\#2. -- Exercise 12.2} 
+\newcommand{\hb}{\hat{\beta}}
+\begin{enumerate}
+  \item[(a)] Since, $\hb_{OLS} = (X^T X)^{-1} X^T Y$, notice that we can write
+  \begin{align*}
+  \hb_{ridge} &= (X^T X + \lambda I)^{-1} X^T Y \\
+  &= (X^T X + \lambda I)^{-1} \biggl((X^T X) (X^T X)^{-1}\biggr) X^T Y \\
+  &= (X^T X + \lambda I)^{-1} X^T X \hb_{OLS} \\
+  &= c_{\lambda} \hb_{OLS}
+  \end{align*}
+  For $X$, a mean-centered vector, $X^T X = \SUM{i}{1}{n} x_i^2 \geq 0$. Hence,
+  $(X^T X + \lambda) \geq 0$ (for $\lambda \geq 0$) and thus 
+  $c_{\lambda} = (X^{T}X)/(X^T X + \lambda) \leq 1$ (with equality iff $\lambda
+  = 0$). This demonstrates that $\hb_{ridge} < \hb_{OLS}$ for $\lambda > 0$. 
+  \item[(b)] Using the form of $\hb_{ridge}$ in part (a), we have that
+  \begin{align*}
+  bias &= E[\hb_{ridge}] - \beta \\
+  &= E[c_{\lambda}\hb_{OLS}] - \beta \\
+  &= c_{\lambda}E[\hb_{OLS}] - \beta \\
+  &= (c_{\lambda} - 1)\beta 
+  \intertext{and}
+  \var(\hb_{ridge}) &= \var(c_{\lambda}\hb_{OLS}) \\
+  &= c_{\lambda}^2 \var(\hb_{OLS}) \\
+  &= c_{\lambda}^{2} \sigma^2 (X^T X)^{-1}
+  \end{align*}
+  \item[(c)] Since $MSE = bias^2 + variance$, and we know that $\hb_{OLS}$ is
+  unbiased, we have that $MSE_{OLS} = \sigma^2 (X^T X)^{-1}$. Furthermore, 
+  using part (b), we know that $MSE_{ridge} 
+  = (c_{\lambda}-1)^2 \beta^2 + c_{\lambda}^2 \sigma^2 (X^T X)^{-1}$. Taking 
+  the difference and solving for $\beta^2$ yields the following inequality:
+  \[
+  \sigma^2(X^T X)^{-1}(1-c_{\lambda}^2) - \beta^2 (c_{\lambda}-1)^{2} > 0
+  \EQ
+  \beta^2 < \sigma^2 \left(\frac{\lambda + 2 X^T X}{\lambda X^T X}\right)
+  \]
+  Alternatively, we could have solved for $\sigma^2$ and instead written:
+  \[
+  MSE_{ridge} < MSE_{OLS}
+  \EQ
+  \sigma^2 > \beta^2  \left(\frac{\lambda X^T X}{\lambda + 2 X^T X}\right)
+  \]
+  Thus, we see that small values of $\beta^2$ and large values of $\sigma^2$
+  tend to favor Ridge over OLS.
+\end{enumerate}
+\end{document}
