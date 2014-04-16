@@ -94,4 +94,31 @@ library(xtable)
   Thus, we see that small values of $\beta^2$ and large values of $\sigma^2$
   tend to favor Ridge over OLS.
 \end{enumerate}
+
+\paragraph{\#3}
+\begin{enumerate}
+  \item[(a)]
+  \begin{align*}
+  R^{2}_{adj, 1} > R^{2}_{adj, 0} 
+  &\EQ 1 - \frac{n-1}{n-(p_1 +1)}\frac{RSS_1}{TSS}
+  > 1 - \frac{n-1}{n-(p_0 +1)}\frac{RSS_0}{TSS} \\
+  &\EQ \frac{n-1}{n-(p_1 +1)}{RSS_1}
+  > - \frac{n-1}{n-(p_0 +1)}{RSS_0} \\
+  &\EQ \frac{RSS_1}{n-(p_1 +1)}
+  < \frac{RSS_0}{n-(p_0 +1)} \\
+  &\EQ \frac{RSS_1}{RSS_0} < \frac{n-(p_1+1)}{n-(p_0+1)}
+  \end{align*}
+  and
+  \begin{align*}
+  AIC_1 < AIC_0 &
+  \EQ n\log\left(\frac{RSS_1}{n}\right) 
+  + n\log(2\pi e) + 2(1+p_1) 
+  < n\log\left(\frac{RSS_0}{n}\right) + n\log(2\pi e)
+  + 2(1+p_0) \\
+  &\EQ \log\left(\frac{RSS_1}{RSS_0}\right)
+  <\frac{2}{n}(p_0 - p_1) \\
+  &\EQ 
+  \frac{RSS_1}{RSS_0} < \exp\set{\frac{2}{n}(p_0 - p_1)}
+  \end{align*}
+\end{enumerate}
 \end{document}
