@@ -107,6 +107,7 @@ library(xtable)
   &\EQ \frac{RSS_1}{n-(p_1 +1)}
   < \frac{RSS_0}{n-(p_0 +1)} \\
   &\EQ \frac{RSS_1}{RSS_0} < \frac{n-(p_1+1)}{n-(p_0+1)}
+  \stackrel{\Delta}{=} f_1(n,p_0, p_1)
   \end{align*}
   and
   \begin{align*}
@@ -119,6 +120,31 @@ library(xtable)
   <\frac{2}{n}(p_0 - p_1) \\
   &\EQ 
   \frac{RSS_1}{RSS_0} < \exp\set{\frac{2}{n}(p_0 - p_1)}
+  \stackrel{\Delta}{=} f_2(n, p_0, p_1)
   \end{align*}
+  \item[(b)] For both criteria to decided on the larger model, we need
+  \[
+  \frac{RSS_1}{RSS_0} < f_1(n,p_0,p_1) \text{ and } 
+  \frac{RSS_1}{RSS_0} < f_1(n,p_0,p_1) 
+  \EQ \frac{RSS_1}{RSS_0} < \min\set{f_1,f_2}
+  \]
+  For both criteria to decide on the smaller model, we need
+    \[
+  \frac{RSS_1}{RSS_0} \geq f_1(n,p_0,p_1) \text{ and } 
+  \frac{RSS_1}{RSS_0} \geq f_1(n,p_0,p_1) 
+  \EQ \frac{RSS_1}{RSS_0} \geq \max\set{f_1,f_2}
+  \]
+  For one criterion to pick the larger, and the other the smaller, we need
+  \[
+  \min\set{f_1,f_2} \leq \frac{RSS_1}{RSS_0} < \max\set{f_1,f_2}
+  \]
+  Now, to determine which criterion more harshly penalizes model complexity, 
+  observe that for a fixed $p_0$ and $n$ (and $p_1 > p_0$), an increase in
+  $p_1$ causes a linear decrease in $f_1$ and an exponential decay in $f_2$. 
+  In particular, for $p_1 = cp_0$ where $c \geq 1$, we see that $f_2$ shrinks 
+  more rapidly, as a function of $c$ than $f_1$ does. This means that as the 
+  larger model contains many times more variables than the smaller model, 
+  $AIC$ will have a harder time justifying an adoption of the larger model, 
+  over the smaller.
 \end{enumerate}
 \end{document}
