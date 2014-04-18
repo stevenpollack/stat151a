@@ -46,11 +46,240 @@ opts_chunk$set(comment="#",
 @
 
 <<loadLibraries, cache=FALSE, results='hide'>>=
-library(ggplot2)
-library(reshape2)
-library(xtable)
+library(MASS)
+library(leaps)
+library(glmnet)
+library(doParallel)
+registerDoParallel(cores=detectCores())
 @
-\paragraph{\#2. -- Exercise 12.2} 
+\paragraph{\#1. -- Exercise 22.1} Variable selection with randomly generated ``noise'' (dapated from Freedman, 1983):
+\begin{enumerate}
+  \item[(a)] Sampling from the standard normal distribution, independently
+  generate 500 observations for 101 variables. Call the first of these 
+  variables the response variable $Y$ and the other variables the predictors 
+  $X_1, X_2, \ldots, X_{100}$. Perform a linear least-squares regression of 
+  $Y$ on $X_1, X_2, \ldots, X_{100}$. Are any of the individual regression 
+  coefficients ``statistically significant''? Is the omnibus $F$-statistic for 
+  the regression ``statistically significant''? Is this what you expected to 
+  observe?
+  <<q1a, echo=TRUE>>=
+  data <- data.frame(mvrnorm(n=500, mu=rep.int(0, 101), Sigma=diag(nrow=101)))
+  colNames <- c("Y", paste0("X", seq.int(100)))
+  colnames(data) <- colNames
+  lmfit <- lm(formula=Y ~ ., data=data)
+  lmSummary <- summary(lmfit)
+  analyzeLinearModel <- function(lmSummary) {
+    pValues <- lmSummary$coefficients[, 4]
+    statSigVars <- names(which(pValues <= 0.05))
+    statSig_pvalues <- pValues[statSigVars]
+    numOfSigVars <- length(statSigVars)
+    
+    cat(paste0("There were ", numOfSigVars, " variables with t-statistics",
+                 " with p-values below 0.05:\n"))
+    print(statSig_pvalues)
+    
+    Fstat <- lmSummary$fstatistic
+    Fstat_pvalue <- pf(Fstat[1], Fstat[2], Fstat[3], lower.tail=FALSE)
+    
+    isFStatSig <- Fstat_pvalue <= 0.05
+
+    if (isFStatSig) {
+      cat(paste0("The F-statistic had a p-value below 0.05: ",
+                 round(Fstat_pvalue, 5), "\n"))
+    } else {
+      cat(paste0("The F-statistic had a p-value below 0.05: ",
+                 round(Fstat_pvalue, 5), "\n"))
+    }
+  }
+  
+  analyzeLinearModel(lmSummary)
+  @
+  Honestly, the only variable I expected to be significant was the intercept.
+  Why would regressing on variables that have \textit{nothing} to do with the
+  response yield significance?
+  
+  \item[(b)] Retain the three predictors in part (a) that have the largest 
+  absolute $t$-values, regressing $Y$ \textit{only} on these variables. Are 
+  the individual coefficients ``statistically significant''? What about the 
+  omnibus $F$? What happens to the $p$-values compared to part (a). 
+  
+  <<q1b, dependson=c("q1a"), echo=TRUE>>=
+  top3Vars <- names(sort(abs(lmSummary$coefficients[, 3]),
+                         decreasing=TRUE)[1:3])
+
+  regrForm <- as.formula(paste0("Y ~ ", paste(top3Vars, collapse=" + ")))
+  lmfit2 <- lm(formula=regrForm, data=data)
+  analyzeLinearModel(summary(lmfit2))
+  @
+  For some variables the $p$-values go down, and other the values go up. 
+  However, all three predictors have statistically significant values and the 
+  $F$-statistic is now significant.
+  
+  \item[(c)] Using any method of variable selection (stepwise regression or 
+  subset regression with any criterion), find the ``best'' model with three 
+  explanatory variables. Obtain the individual $t$-statistics and omnibus $F$ 
+  for this model. How do these tests compare to those in part (a)?
+  
+  <<q1c, dependson=c("q1a"), echo=TRUE>>=
+  leapsObj <- regsubsets(x=as.matrix(data[,-1]), y=as.matrix(data[,1]),
+                         nbest=1, nvmax=3, intercept=TRUE,
+                         really.big=TRUE, method="exhaust" )
+  bestVars <- intersect(colNames,
+                        names(which(summary(leapsObj)$which[3,] == TRUE)))
+
+  regrForm2 <- as.formula(paste0("Y ~ ", paste(bestVars, collapse=" + ")))
+  lmfit3 <- lm(formula=regrForm2, data=data)
+  analyzeLinearModel(summary(lmfit3))
+  @
+  
+  The best subsets model, as returned by \texttt{regsubsets} has the 
+  regression formula
+  <<>>=
+  regrForm2
+  @ 
+  Whereas, the top 3 $t$-statistic model has the regression formula
+  <<>>=
+  regrForm
+  @
+  The $p$-values for the variables (and the $F$-stat) in the former model are 
+  all lower than than the $p$-values in the latter model. They're also a lot
+  smaller than the significant variables in the full model fit in (a).
+  
+  \item[(d)] Using the methods of model selection discussed in this chapter, 
+  find the ``best'' model for these data. How does the model compare to the 
+  true model that generated the data?
+  
+  <<q1d, dependson=c("q1a"), echo=TRUE>>=
+  lassoFit <- cv.glmnet(x=as.matrix(data[,-1]), y=as.matrix(data[,1]),
+                        nlambda=300, alpha=1, standardize=FALSE,
+                        parallel=TRUE)
+
+  lassoVars <- rownames(coef(lassoFit, s="lambda.min"))[which(coef(lassoFit,
+                                                      s="lambda.min") != 0)]
+  @
+  Though they don't discuss the lasso in this chapter, it's just as valid
+  a method of model selection, so we'll use \texttt{glmnet} to do model
+  selection in that way. Unsurprisingly, lasso isn't fooled by the noise, 
+  and the cross-validated $\lambda$ places the best model at
+  <<>>=
+  as.formula(paste0("Y ~ ", paste(lassoVars, collapse=" + ")))
+  @
+  which is the null-model.
+  \item[(e)] Validation: Generate a new set of 500 observations as in part(a), 
+  and use the new dataset to validate the models that you slected in parts 
+  (b), (c), and (d). What do you conclude?
+  <<q1e, dependson=c("q1a", "q1b", "q1c", "q1d"), echo=TRUE>>=
+  newdata <- data.frame(mvrnorm(n=500, mu=rep.int(0, 101),
+                                Sigma=diag(nrow=101)))
+  colnames(newdata) <- colNames
+  preds <- list(m1Preds = predict(lmfit, newdata=newdata[,-1],),
+               m2Preds = predict(lmfit2, newdata=newdata[,-1]),
+               m3Preds = predict(lmfit3, newdata=newdata[,-1]),
+               lassoPreds = predict(lassoFit, newx=as.matrix(newdata[,-1]),
+                                s="lambda.min"))
+
+  modelMSEs <- sapply(preds,
+                      FUN=function(preds) mean((newdata[,1] - preds)^2))
+  
+  modelMSEs
+  @
+  We can conclude that \Sexpr{names(modelMSEs)[which.min(modelMSEs)]} has 
+  the lowest MSE.
+  \item[(f)] Repeat the entire experiment several times.
+  <<q1fa>>=
+  analyzeLinearModel <- function(lmSummary) {
+    pValues <- lmSummary$coefficients[, 4]
+    statSigVars <- names(which(pValues <= 0.05))
+    statSig_pvalues <- pValues[statSigVars]
+    numOfSigVars <- length(statSigVars)
+    
+    cat(paste0("There were ", numOfSigVars, " variables with t-statistics",
+                 " with p-values below 0.05:\n"))
+    print(statSig_pvalues)
+    
+    Fstat <- lmSummary$fstatistic
+    Fstat_pvalue <- pf(Fstat[1], Fstat[2], Fstat[3], lower.tail=FALSE)
+    
+    isFStatSig <- Fstat_pvalue <= 0.05
+
+    if (isFStatSig) {
+      cat(paste0("The F-statistic had a p-value below 0.05: ",
+                 round(Fstat_pvalue, 5), "\n"))
+    } else {
+      cat(paste0("The F-statistic had a p-value below 0.05: ",
+                 round(Fstat_pvalue, 5), "\n"))
+    }
+  }
+  
+  experiment <- function(i) {
+    cat("\n ************ experiment ", i, "*************** \n")
+    
+    data <- data.frame(mvrnorm(n=500, mu=rep.int(0, 101),
+                               Sigma=diag(nrow=101)))
+    colNames <- c("Y", paste0("X", seq.int(100)))
+    colnames(data) <- colNames
+    lmfit <- lm(formula=Y ~ ., data=data)
+    lmSummary <- summary(lmfit)
+    
+    cat("Full model summary:\n")
+    analyzeLinearModel(lmSummary)
+    
+    top3Vars <- names(sort(abs(lmSummary$coefficients[, 3]),
+                         decreasing=TRUE)[1:3])
+  
+    regrForm <- as.formula(paste0("Y ~ ", paste(top3Vars, collapse=" + ")))
+    lmfit2 <- lm(formula=regrForm, data=data)
+    
+    cat("\nTop 3 t-stat model summary: \n")
+    analyzeLinearModel(summary(lmfit2))
+    
+    leapsObj <- regsubsets(x=as.matrix(data[,-1]), y=as.matrix(data[,1]),
+                         nbest=1, nvmax=3, intercept=TRUE,
+                         really.big=TRUE, method="exhaust" )
+    
+    bestVars <- intersect(colNames,
+                          names(which(summary(leapsObj)$which[3,] == TRUE)))
+  
+    regrForm2 <- as.formula(paste0("Y ~ ", paste(bestVars, collapse=" + ")))
+    lmfit3 <- lm(formula=regrForm2, data=data)
+    
+    cat("\nBest 3-variable Subset model Summar:\n")
+    analyzeLinearModel(summary(lmfit3))
+        
+    lassoFit <- cv.glmnet(x=as.matrix(data[,-1]), y=as.matrix(data[,1]),
+                          nlambda=300, alpha=1, standardize=FALSE,
+                          parallel=TRUE)
+  
+    lassoVars <- rownames(coef(lassoFit, s="lambda.min"))[which(coef(lassoFit,
+                                                        s="lambda.min") != 0)]
+    
+    cat("\nBest LASSO model:\n")
+    cat(paste0("Y ~ ", paste(lassoVars, collapse=" + "), "\n\n"))
+    
+    newdata <- data.frame(mvrnorm(n=500, mu=rep.int(0, 101),
+                                  Sigma=diag(nrow=101)))
+    colnames(newdata) <- colNames
+    preds <- list(m1Preds = predict(lmfit, newdata=newdata[,-1],),
+                 m2Preds = predict(lmfit2, newdata=newdata[,-1]),
+                 m3Preds = predict(lmfit3, newdata=newdata[,-1]),
+                 lassoPreds = predict(lassoFit, newx=as.matrix(newdata[,-1]),
+                                  s="lambda.min"))
+  
+    modelMSEs <- sapply(preds,
+                        FUN=function(preds) mean((newdata[,1] - preds)^2))
+    
+    modelMSEs
+  }
+  @
+  <<q1fb, dependson=c("q1fa"), echo=FALSE>>=
+  experimentResults <- sapply(X=seq.int(5),FUN=experiment)
+  @
+  <<dependson=c("q1fb")>>=
+  experimentResults
+  @
+  The LASSO model has the lowest MSE of all models every time.
+\end{enumerate}
+\paragraph{\#2.} 
 \newcommand{\hb}{\hat{\beta}}
 \begin{enumerate}
   \item[(a)] Since, $\hb_{OLS} = (X^T X)^{-1} X^T Y$, notice that we can write
