@@ -46,13 +46,14 @@ opts_chunk$set(comment="#",
 @
 
 <<loadLibraries, cache=FALSE, results='hide'>>=
+library(nnet)
 library(MASS)
 library(leaps)
 library(glmnet)
 library(doParallel)
 registerDoParallel(cores=detectCores())
 @
-\paragraph{\#1. -- Exercise 22.1} Variable selection with randomly generated ``noise'' (dapated from Freedman, 1983):
+\paragraph{\#1. -- Exercise 22.1} Variable selection with randomly generated ``noise'' (adapted from Freedman, 1983):
 \begin{enumerate}
   \item[(a)] Sampling from the standard normal distribution, independently
   generate 500 observations for 101 variables. Call the first of these 
@@ -376,4 +377,230 @@ registerDoParallel(cores=detectCores())
   $AIC$ will have a harder time justifying an adoption of the larger model, 
   over the smaller.
 \end{enumerate}
+
+\paragraph{\#4} 
+Given the number of variables in the dataset, an "all subsets" model-selection 
+process is computationally intractable. Hence, I performed my analysis on 
+models selected via backwards stepwise, LASSO, and Ridge regression. It seemed 
+that taking the $\log$ of \texttt{inctot} (after shifting the values to all be 
+non-negative) normalized the means of most of the categorical
+variables, so my model is actually on \texttt{logInc} which is defined as 
+\texttt{log(inctot + 10001)}. I'm not entirely sure why there's a negative 
+income in this dataset, but removing these 22 values seemed unjustified, so I 
+decided to keep them. Given my little expetise on the matter, I thought that a 
+full model would include interaction terms between \texttt{sex} and \texttt{
+educ} and the race variables, \texttt{hispan, white, black, aian, asian} (I 
+also included interactions between \texttt{sex} and \texttt{educ}). This 
+yielded a full model with 716 variables. I then used the coefficients that 
+were \texttt{NA} in the basic, full-model, linear regression to indicate which 
+predictors were effectively co-linear. Once these were removed, there were 356 
+predictors. Of the three model creation methods:
+\begin{itemize}
+  \item backwards stepwise regression paired this down to 119 predictors
+  \item lasso regression suggested we reduce the model to 15 predictors
+  \item ridge regression does not do any model selection, so it just gave very
+  small coefficients for all 356 predictors.
+\end{itemize}
+  
+Since \texttt{glmnet} cross-validates MSE for us, the only out-of-the-box
+cross-validation needed was on the MSE for the stepwise regression. As the 
+output below indicates, all three methods' cross-validated MSE's were quite
+pessimistic; all methods did better on the heldout data than the 
+cross-validated estimate.
+<<q4a>>=
+setwd("~/Dropbox/Berkeley/STAT151A/")
+
+source("./HW_solutions/HW4/kFoldCV.R")
+
+censusData <- read.table(file="HW_solutions/HW4/censusSmallTrain.txt",
+                         header=TRUE)
+
+formatCensusData <- function(censusData) {
+  
+  censusData[, 1] <- log(censusData$inctot + 10000 + 1)
+  names(censusData)[1] <- "logInc"
+  
+  # categorical variables:
+  catVars <- c("sex", "hispan", "white", "black", "aian", "asian",
+               "nhpi", "other", "race1", "marstat", "educ", "speak",
+               "citizen", "abwork", "disable", "military", "milyrs",
+               "esr", "lastwrk", "clwkr", "worklyr", "tenure",
+               "hht", "fnf", "hhl", "empstat", "paoc", "parc",
+               "p65", "wif")
+  
+  interactionVars <- c("sex", "educ")
+  raceVars <- c("hispan", "white", "black", "aian", "asian")
+  
+  # probably want interactions between sex, race and educ.
+  
+  # remove disable and yr2us most likely...
+  # numeric
+  numVars <- c("logInc", "age", "pweight", "inctot", "persons",
+               "p18", "npf", "noc", "nrc", "yr2us", "weeks")
+
+  # unroll categorical variables:
+  
+  require(nnet)
+  
+  catData <- as.data.frame(sapply(X=catVars, function(varName) {
+    class.ind(censusData[, varName])
+  }))
+  
+  makeInteractionMat <- function(interactionVars, raceVars) {
+    tmp <-lapply(interactionVars, function(interactionVar) {
+      interDummyMat <- class.ind(censusData[, interactionVar])
+      colnames(interDummyMat) <- paste0(interactionVar, ".", colnames(interDummyMat))
+      lapply(raceVars, function(raceVar) {
+        dummyMat <- class.ind(censusData[, raceVar])
+        colnames(dummyMat) <- paste0(raceVar, ".", colnames(dummyMat))
+        tmp <- lapply(colnames(interDummyMat), function(interLevel) {
+          col1 <- interDummyMat[, interLevel]
+          out <- data.frame(apply(dummyMat, 2, function(col2) col1 * col2))
+          colnames(out) <- paste0(interLevel, ".x.", colnames(dummyMat))
+          out
+        })
+        do.call(cbind, tmp)
+      })
+    })
+    
+    do.call(cbind, lapply(tmp, function(x) do.call(cbind, x)))
+  }
+  
+  # create iteractions between sex, education, and race
+  interactionMat <- makeInteractionMat(interactionVars, raceVars)
+  interactionMat <- cbind(interactionMat,
+                          makeInteractionMat("sex", "educ"))
+  
+  numData <- censusData[, numVars[-4]] #exclude inctot -- predict logInc instead
+  
+  cbind(numData, catData, interactionMat)
+}
+
+data <- formatCensusData(censusData)
+
+holdoutData <- read.table(file="HW_solutions/HW4/censusSmallTest.txt",
+                          header=TRUE)
+
+holdoutData <- formatCensusData(holdoutData)
+@
+<<q4colinearity, dependson=c("q4a")>>=
+# infer colinearity from lm
+lmfit <- lm(logInc ~ ., data=data)
+colinVars <- names(which(is.na(coefficients(lmfit))))
+
+untangledData <- subset(data, select=!(colnames(data) %in% colinVars))
+
+lmfit2 <- lm(logInc ~ ., data=untangledData)
+# summary(lmfit2) # no more NA's which is good
+@
+<<q4stepwise, dependson=c("q4colinearity")>>=
+backwardsStepwiseFit <- regsubsets(x=as.matrix(subset(untangledData,
+                                                      select=-logInc)),
+                                  y=untangledData[, "logInc"],
+                                  method=c("backward"),
+                                  really.big = TRUE, nvmax=356)
+
+stepwiseSummary <- summary(backwardsStepwiseFit)
+
+stepwiseVars <- names(subset(untangledData, select=-logInc))[
+                  stepwiseSummary$which[which.max(stepwiseSummary$adjr2),][-1]
+                  ]
+
+#length(stepwiseVars) # 119
+stepwiseFormula <- as.formula(paste0("logInc ~ ",
+                                     paste(stepwiseVars, collapse="+")))
+
+stepwiseModel <- lm(stepwiseFormula, untangledData)
+
+# summary(stepwiseModel)
+@
+
+<<q4lasso, dependson=c("q4colinearity")>>=
+# do lasso and ridge
+lassoFit <- cv.glmnet(x=as.matrix(subset(untangledData, select=-logInc)),
+                      y=untangledData[, "logInc"],
+                      alpha=1,
+                      parallel=TRUE,
+                      standardize=FALSE)
+
+lassoVars <- rownames(coef(lassoFit, s=0))[
+                  which(coef(lassoFit, s="lambda.min") != 0)][-1]
+
+lassoMSE <- min(lassoFit$cvm) # 0.3518
+@
+
+<<q4ridge, dependson=c("q4colinearity")>>=
+ridgeFit <- cv.glmnet(x=as.matrix(subset(untangledData, select=-logInc)),
+                      y=untangledData[, "logInc"],
+                      alpha=0,
+                      parallel=TRUE,
+                      standardize=FALSE)
+
+ridgeVars <- rownames(coef(ridgeFit, s=0))[
+               which(coef(ridgeFit, s="lambda.min") != 0)][-1]
+
+ridgeMSE <- min(ridgeFit$cvm) # 0.3861
+@
+
+<<q4cv, dependson=c("q4colinearity", "q4stepwise")>>=
+# cross validate MSE of step-wise model:
+
+f <- function(data, newdata, k) {
+  model <- lm(formula=stepwiseFormula, data=data)
+  preds <- predict(model, newdata=newdata)
+  (preds - newdata[,1])^2
+}
+
+stepwiseMSE <- kFoldCV(proc=f, k=10,
+                       data=untangledData,
+                       params=data.frame(k=1)) # 0.318
+
+@
+
+<<q4validation, dependson=c("q4a", "q4stepwise", "q4lasso", "q4ridge")>>=
+# sanity check:
+#which(!(lassoVars %in% colnames(holdoutData) )) # 0
+
+stepwiseCoefs <- coef(stepwiseModel)
+stepwisePreds <- apply(subset(holdoutData, select=stepwiseVars), 1,
+                       function(row) c(1,row) %*% stepwiseCoefs )
+
+stepwiseMSE_holdout <- mean((holdoutData[, "logInc"] - stepwisePreds)^2) # 0.254
+
+# which(!(stepwiseVars %in% colnames(holdoutData) )) # 0
+
+lassoCoefs <- coef(lassoFit,s="lambda.min")[c("(Intercept)",lassoVars),]
+lassoPreds <- apply(subset(holdoutData, select=lassoVars), 1, function(row){
+                c(1,row) %*% lassoCoefs
+                })
+
+lassoMSE_holdout <- mean((holdoutData[, "logInc"] - lassoPreds)^2) # 0.275
+
+# which((ridgeVars %in% colnames(holdoutData) )) # 15, 28, 78, 137!!
+
+# relevant columns in holdoutData
+ridgeCoefs <- coef(ridgeFit,s="lambda.min")[c(1,
+                  which(
+                    c("Intercept",ridgeVars) %in% colnames(holdoutData))
+                  ),] # 15, 28, 78, 137!!
+
+ridgePreds <- apply(subset(holdoutData, select=names(ridgeCoefs[-1])), 1,
+                    function(row) c(1,row) %*% ridgeCoefs )
+
+
+ridgeMSE_holdout <- mean((holdoutData[, "logInc"] - ridgePreds)^2) # 0.308
+
+results <- matrix(c(stepwiseMSE, stepwiseMSE_holdout,
+                    lassoMSE, lassoMSE_holdout,
+                    ridgeMSE, ridgeMSE_holdout),
+                  byrow=TRUE, ncol=2)
+
+colnames(results) <- c("CV MSE", "Holdout MSE")
+rownames(results) <- c("stepwise", "lasso", "ridge")
+@
+
+<<q4results, dependson=c("q4validation")>>=
+results
+@
+
 \end{document}
